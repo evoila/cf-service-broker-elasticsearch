@@ -1,0 +1,6 @@
+[submodule "core"]
+	path = core
+	url = https://github.com/evoila/cf-service-broker-core
+[submodule "deployment"]
+	path = deployment
+	url = https://github.com/evoila/cf-service-broker-deployment
