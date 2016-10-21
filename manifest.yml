@@ -1,0 +1,14 @@
+---
+instances: 1
+timeout: 180
+memory: 1024M
+domain: 
+applications:
+- name: elasticsearch
+  host: elasticsearch
+  path: target/ssb-elasticsearch.jar
+  buildpack: https://github.com/cloudfoundry/java-buildpack.git
+  env:
+    CF_TARGET:
+    SPRING_PROFILES_ACTIVE: cloud
+    JAVA_OPTS: -Djava.security.egd=file:/dev/urandom

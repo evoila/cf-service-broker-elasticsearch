@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>de.evoila.cf.broker</groupId>
+		<artifactId>custom.parent</artifactId>
+		<version>0.1-RC</version>
+	</parent>
+	<artifactId>cf-service-broker-elasticsearch</artifactId>
+	<packaging>jar</packaging>
+	<name>ssb-elasticsearch</name>
+
+	<dependencies>
+		<!-- Cloud Foundry Service Broker -->
+		<dependency>
+			<groupId>de.evoila.cf.broker</groupId>
+			<artifactId>core</artifactId>
+			<version>0.1-RC</version>
+		</dependency>
+		<dependency>
+			<groupId>de.evoila.cf.broker</groupId>
+			<artifactId>docker</artifactId>
+			<version>0.1-RC</version>
+		</dependency>
+		<dependency>
+			<groupId>de.evoila.cf.broker</groupId>
+			<artifactId>openstack</artifactId>
+			<version>0.1-RC</version>
+		</dependency>
+		<dependency>
+			<groupId>de.evoila.cf.broker</groupId>
+			<artifactId>persistence-redis</artifactId>
+			<version>0.1-RC</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<extensions>
+			<extension>
+				<groupId>org.apache.maven.wagon</groupId>
+				<artifactId>wagon-ftp</artifactId>
+				<version>1.0-beta-6</version>
+			</extension>
+		</extensions>
+	</build>
+	<distributionManagement>
+		<repository>
+			<id>ftp-meshstack</id>
+			<url>ftp://maven.meshstack.io</url>
+		</repository>
+	</distributionManagement>
+</project>

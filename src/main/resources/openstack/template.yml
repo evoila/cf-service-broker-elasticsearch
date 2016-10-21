@@ -1,0 +1,71 @@
+heat_template_version: 2013-05-23
+description: Deployment Description for Elasticsearch
+parameters:
+  image_id:
+    type: string
+    description: Image used for servers
+  keypair:
+    type: string
+    description: SSH key to connect to the servers
+  flavor:
+    type: string
+    description: flavor used by the web servers
+  network_id:
+    type: string
+    description: Network used by the server
+  volume_size:
+    type: number
+    description: Size of the volume to be created.
+  availability_zone:
+    type: string
+    description: The Availability Zone to launch the instance.
+  repo_main:
+    type: string
+    description: Main repository for deployment scripts lookup
+  repo_monit:
+    type: string
+    description: Repository for monit deployment scripts lookup
+  repo_service:
+    type: string
+    description: Repository for deployment scripts lookup for the service to deploy
+  es_password:
+    type: string
+    description: The password of the elasticsearch instance.
+resources:
+  nova_instance:
+    type: OS::Nova::Server
+    properties:
+      flavor: {get_param: flavor}
+      image: {get_param: image_id}
+      key_name: {get_param: keypair}
+      networks: [{network: {get_param: network_id} }]
+      user_data_format: RAW
+      security_groups:
+        - all
+      user_data:
+        str_replace:
+          template: |
+            #!/bin/bash
+            export REPOSITORY_ELASTICSEARCH=$repo_service
+            export REPOSITORY_MONIT=$repo_monit
+            export REPOSITORY_MAIN=$repo_main
+
+            wget $repo_service/elasticsearch-template.sh --no-cache
+            chmod +x elasticsearch-template.sh
+            ./elasticsearch-template.sh -p $es_password -e openstack
+          params:
+            $repo_main: {get_param: repo_main}
+            $repo_monit: {get_param: repo_monit}
+            $repo_service: {get_param: repo_service}
+            $es_password: {get_param: es_password}
+  cinder_volume:
+    type: OS::Cinder::Volume
+    properties:
+      size: { get_param: volume_size }
+      availability_zone: { get_param: availability_zone }
+  volume_attachment:
+    type: OS::Cinder::VolumeAttachment
+    properties:
+      volume_id: { get_resource: cinder_volume }
+      instance_uuid: { get_resource: nova_instance }
+      mountpoint: /dev/vdc
