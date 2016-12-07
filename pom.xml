@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>de.evoila.cf.broker</groupId>
-		<artifactId>custom.parent</artifactId>
+		<artifactId>custom-parent</artifactId>
 		<version>0.1-RC</version>
 	</parent>
 	<artifactId>cf-service-broker-elasticsearch</artifactId>
