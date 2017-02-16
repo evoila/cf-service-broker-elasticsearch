@@ -12,43 +12,34 @@
 	<packaging>jar</packaging>
 	<name>ssb-elasticsearch</name>
 
+	<properties>
+		<core.version>0.1-RC</core.version>
+		<deployment.version>0.1-RC</deployment.version>
+		<persistence.version>0.1-RC</persistence.version>
+	</properties>
+
+
 	<dependencies>
 		<!-- Cloud Foundry Service Broker -->
 		<dependency>
 			<groupId>de.evoila.cf.broker</groupId>
 			<artifactId>core</artifactId>
-			<version>0.1-RC</version>
+			<version>${core.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>de.evoila.cf.broker</groupId>
 			<artifactId>docker</artifactId>
-			<version>0.1-RC</version>
+			<version>${deployment.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>de.evoila.cf.broker</groupId>
 			<artifactId>openstack</artifactId>
-			<version>0.1-RC</version>
+			<version>${deployment.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>de.evoila.cf.broker</groupId>
-			<artifactId>persistence-redis</artifactId>
-			<version>0.1-RC</version>
+			<artifactId>persistence-mongodb</artifactId>
+			<version>${persistence.version}</version>
 		</dependency>
 	</dependencies>
-
-	<build>
-		<extensions>
-			<extension>
-				<groupId>org.apache.maven.wagon</groupId>
-				<artifactId>wagon-ftp</artifactId>
-				<version>1.0-beta-6</version>
-			</extension>
-		</extensions>
-	</build>
-	<distributionManagement>
-		<repository>
-			<id>ftp-meshstack</id>
-			<url>ftp://maven.meshstack.io</url>
-		</repository>
-	</distributionManagement>
 </project>
