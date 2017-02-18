@@ -11,6 +11,7 @@
 	<artifactId>cf-service-broker-elasticsearch</artifactId>
 	<packaging>jar</packaging>
 	<name>ssb-elasticsearch</name>
+	<version>0.1-RC</version>
 
 	<properties>
 		<core.version>0.1-RC</core.version>
