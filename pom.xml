@@ -6,17 +6,17 @@
 	<parent>
 		<groupId>de.evoila.cf.broker</groupId>
 		<artifactId>custom-parent</artifactId>
-		<version>0.1-RC</version>
+		<version>1.1.0</version>
 	</parent>
 	<artifactId>cf-service-broker-elasticsearch</artifactId>
 	<packaging>jar</packaging>
 	<name>ssb-elasticsearch</name>
-	<version>0.1-RC</version>
+	<version>1.1.0</version>
 
 	<properties>
-		<core.version>0.1-RC</core.version>
-		<deployment.version>0.1-RC</deployment.version>
-		<persistence.version>0.1-RC</persistence.version>
+		<core.version>1.1.0</core.version>
+		<deployment.version>1.1.0</deployment.version>
+		<persistence.version>1.1.0</persistence.version>
 	</properties>
 
 
