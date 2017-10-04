@@ -1,0 +1,101 @@
+<div class="container" style="padding: 20px 0 0 0">
+  <div class="row">
+    <div class="col-lg-6">
+      <div class="row">
+        <div class="col-lg-12">
+          <h2>Active Backup Plans</h2>
+          <p>These are the currently active Backup Plans for your service instance. If the list is empty, please create a new Backup Plan.
+          </p>
+          <p><a class="btn btn-secondary" routerLink="/backup/plan" role="button">Create Backup Plan »</a></p>
+          <table class="table">
+            <thead class="thead-default">
+              <tr>
+                <th>#</th>
+                <th>Context</th>
+                <th>Type</th>
+                <th>Frequency</th>
+                <th>Retention</th>
+                <th></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let plan of plans; let i = index">
+                <th scope="row">{{i + 1}}</th>
+                <td>{{ plan.source.context }}</td>
+                <td>{{ plan.source.type }}</td>
+                <td>{{ plan.frequency }}</td>
+                <td>{{ plan.retentionStyle }}</td>
+                <td><a href="#" routerLink="/backup/plan/{{plan.id}}">Details</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="col-lg-12">
+          <h2>Restore data from Backup</h2>
+          <p>Click the button below to restore data from a backup stored in a Swift container.</p>
+          <p><a class="btn btn-secondary" routerLink="/backup/create-restore" role="button">Restore from Backup »</a></p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="row">
+        <div class="col-lg-12">
+          <h2>Backend Endpoints</h2>
+          <p>These are your backup configuration endpoints. You can reuse them to create new backup definitions.
+          </p>
+          <p><a class="btn btn-secondary" routerLink="/backup/file-endpoint" role="button">Create File Endpoint »</a></p>
+          <table class="table">
+            <thead class="thead-default">
+              <tr>
+                <th>#</th>
+                <th>Auth URL</th>
+                <th>Domain</th>
+                <th>Project</th>
+                <th>Container</th>
+                <th></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let destination of destinations; let i = index">
+                <th scope="row">{{i + 1}}</th>
+                <td>{{ destination.authUrl }}</td>
+                <td>{{ destination.domain }}</td>
+                <td>{{ destination.projectName }}</td>
+                <td>{{ destination.containerName }}</td>
+                <td><a href="#" routerLink="/backup/file-endpoint/{{destination.id}}">Details</a></td>
+                <td><a href="#" (click)="startBackup(destination.id)">Backup Now</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="col-lg-12">
+          <h2>Recent Backup Jobs</h2>
+          <p>These are all your recently executed Backup Jobs. The list contains active Backup Plans as well as manually triggered Backup Jobs
+          </p>
+          <table class="table">
+            <thead class="thead-default">
+              <tr>
+                <th>#</th>
+                <th>Start Date</th>
+                <th>Instance</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let job of jobs; let i = index">
+                <th scope="row">{{i + 1}}</th>
+                <td>{{ job.startDate | date:"dd.MM.yyyy - hh:mm" }}</td>
+                <td>{{ job.instanceId }}</td>
+                <td>{{ job.status }}</td>
+                <td><a href="#" routerLink="/backup/job/{{job.id}}">Details</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

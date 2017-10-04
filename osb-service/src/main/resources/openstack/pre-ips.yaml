@@ -1,0 +1,50 @@
+heat_template_version: 2016-04-08
+description: Deployment Description for Ports and IPs for Elasticsearch-Cluster (Skript 1/4)
+
+parameters:
+
+  node_number:
+    type: number
+    description: Number of nodes for Cluster.
+    default: 3
+  resource_name:
+    type: string
+    description: Name-prefix for created resources in OpenStack.
+
+  network_id:
+    type: string
+    description: Network used by the server
+  security_groups:
+    type: comma_delimited_list
+    description: Name of the security group for the nodes (as comma delimited list).
+
+
+resources:
+
+  cluster_ports:
+    type: OS::Heat::ResourceGroup
+    properties:
+      count: { get_param: node_number }
+      resource_def:
+        type: OS::Neutron::Port
+        properties:
+          name:
+            str_replace:
+              template: port_name%index%
+              params:
+                port_name: { get_param: resource_name }
+          network_id: {get_param: network_id}
+          security_groups: { get_param: security_groups }
+
+
+outputs:
+
+  port_ips:
+    description: All ips attached to the created ports
+    value: {get_attr: [cluster_ports, fixed_ips, 0, ip_address]}
+  port_ids:
+    description: IDs created of ports
+    value: {get_attr: [cluster_ports, refs]}
+  port_names:
+    description: Names of created ports
+    value: {get_attr: [cluster_ports, name]}

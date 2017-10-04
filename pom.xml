@@ -1,46 +1,77 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>de.evoila.cf.broker</groupId>
-		<artifactId>custom-parent</artifactId>
-		<version>1.1.0</version>
-	</parent>
-	<artifactId>cf-service-broker-elasticsearch</artifactId>
-	<packaging>jar</packaging>
-	<name>ssb-elasticsearch</name>
+	<groupId>de.evoila.cf.broker</groupId>
+	<artifactId>repo-parent</artifactId>
 	<version>1.1.0</version>
+	<packaging>pom</packaging>
+	<name>example</name>
+
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>1.5.2.RELEASE</version>
+	</parent>
+
+	<modules>
+		<module>osb-dashboard</module>
+		<module>osb-backup-core</module>
+		<module>osb-core</module>
+		<module>osb-persistence</module>
+		<module>osb-deployment</module>
+		<module>osb-service</module>
+	</modules>
 
 	<properties>
-		<core.version>1.1.0</core.version>
-		<deployment.version>1.1.0</deployment.version>
-		<persistence.version>1.1.0</persistence.version>
+		<resource.dir>${basedir}/../osb-service/src/main/resources</resource.dir>
+		<dashboard.module>example</dashboard.module>
+		<java.version>1.8</java.version>
 	</properties>
 
+	<build>
+		<plugins>
 
-	<dependencies>
-		<!-- Cloud Foundry Service Broker -->
-		<dependency>
-			<groupId>de.evoila.cf.broker</groupId>
-			<artifactId>core</artifactId>
-			<version>${core.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>de.evoila.cf.broker</groupId>
-			<artifactId>docker</artifactId>
-			<version>${deployment.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>de.evoila.cf.broker</groupId>
-			<artifactId>openstack</artifactId>
-			<version>${deployment.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>de.evoila.cf.broker</groupId>
-			<artifactId>persistence-mongodb</artifactId>
-			<version>${persistence.version}</version>
-		</dependency>
-	</dependencies>
+		</plugins>
+	</build>
+
+	<repositories>
+		<repository>
+			<id>Maven Central</id>
+			<name>Central Maven Repository</name>
+			<url>http://repo1.maven.org/maven2/</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>spring-snapshot</id>
+			<name>Spring Maven SNAPSHOT Repository</name>
+			<url>http://repo.springsource.org/libs-snapshot</url>
+		</repository>
+		<repository>
+			<id>spring-repository</id>
+			<url>https://repo.spring.io/libs-release</url>
+		</repository>
+	</repositories>
+
+	<pluginRepositories>
+		<pluginRepository>
+			<id>Maven Central</id>
+			<name>Central Maven Repository</name>
+			<url>http://repo1.maven.org/maven2/</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</pluginRepository>
+		<pluginRepository>
+			<id>spring-snapshots</id>
+			<url>http://repo.spring.io/snapshot</url>
+		</pluginRepository>
+		<pluginRepository>
+			<id>spring-milestones</id>
+			<url>http://repo.spring.io/milestone</url>
+		</pluginRepository>
+	</pluginRepositories>
 </project>

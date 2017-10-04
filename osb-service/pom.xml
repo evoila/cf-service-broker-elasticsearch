@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>de.evoila.cf.broker</groupId>
+        <artifactId>custom-parent</artifactId>
+        <version>1.2.0</version>
+        <relativePath>../osb-core/custom-parent</relativePath>
+    </parent>
+    <artifactId>cf-service-broker-elasticsearch</artifactId>
+    <packaging>jar</packaging>
+    <name>cf-service-broker-elasticsearch</name>
+    <version>1.2.0</version>
+
+
+    <properties>
+        <core.version>1.2.0</core.version>
+        <deployment.version>1.2.0</deployment.version>
+        <persistence.version>1.2.0</persistence.version>
+    </properties>
+
+
+    <dependencies>
+        <!-- Cloud Foundry Service Broker -->
+        <dependency>
+            <groupId>de.evoila.cf.broker</groupId>
+            <artifactId>existing-service</artifactId>
+            <version>${deployment.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>de.evoila.cf.broker</groupId>
+            <artifactId>persistence-mongodb</artifactId>
+            <version>${persistence.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>de.evoila.cf.broker</groupId>
+            <artifactId>openstack</artifactId>
+            <version>1.2.0</version>
+        </dependency>
+    </dependencies>
+</project>

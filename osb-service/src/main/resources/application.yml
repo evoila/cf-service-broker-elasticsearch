@@ -1,0 +1,24 @@
+spring:
+  ### Profile ###
+  profiles: 
+    active: local
+  ### General Information ###
+  application:
+    name: example-dev
+  ### Security ###
+  ssl:
+    acceptSelfSigned: true
+  ### Cloud Config ###
+  cloud:
+    config:
+      uri: ${SPRING_CLOUD_CONFIG_URI:http://localhost:8081}
+
+  ### General Information ###
+  info:
+    app:
+      name: Example Service Broker
+      description: This is a example Service Broker, demonstrating the purpose of SB development 
+      version: 1.1.0
+
+  server:
+    port: 8080

@@ -1,0 +1,40 @@
+<div class="container" style="padding: 20px 0 0 0">
+  <div class="row">
+    <div class="col-lg-12">
+      <h2> Service Instance </h2>
+      <table class="table" *ngIf="generalInfo !== undefined">
+        <tbody>
+        <tr>
+          <th>Service ID</th>
+          <td>{{generalInfo.service_instance_id}}</td>
+        </tr>
+        <tr>
+          <th>Service Description</th>
+          <td>{{generalInfo.service}}</td>
+        </tr>
+        <tr>
+          <th>Volume Size</th>
+          <td>{{generalInfo.volumeSize}}{{generalInfo.volumeUnit}}</td>
+        </tr>
+
+        <tr>
+          <th>Free</th>
+          <td>{{(generalInfo.free) ? "Yes" : "No"}}</td>
+        </tr>
+        <tr>
+          <th>Service Platform</th>
+          <td>{{generalInfo.platform}}</td>
+        </tr>
+        <tr>
+          <th>Service Flavour</th>
+          <td>{{generalInfo.flavour}}</td>
+        </tr>
+        <tr>
+          <th>Dashboard</th>
+          <td>{{generalInfo.dashboarUrl}}</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

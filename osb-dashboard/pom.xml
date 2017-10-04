@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>de.evoila.cf.broker</groupId>
+  <artifactId>dashboard</artifactId>
+  <version>0.1.0</version>
+  <packaging>pom</packaging>
+  <name>dashboard</name>
+
+  <parent>
+    <groupId>de.evoila.cf.broker</groupId>
+    <artifactId>repo-parent</artifactId>
+    <version>1.1.0</version>
+    <relativePath>../</relativePath>
+  </parent>
+
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-clean-plugin</artifactId>
+        <version>3.0.0</version>
+        <configuration>
+          <filesets>
+            <fileset>
+              <directory>${resource.dir}/static</directory>
+            </fileset>
+            <fileset>
+              <directory>${resource.dir}/templates</directory>
+            </fileset>
+          </filesets>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.0.2</version>
+        <executions>
+          <execution>
+            <id>copy-static-content</id>
+            <!-- here the phase you need -->
+            <phase>install</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${resource.dir}/static/</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${basedir}/dist/${dashboard.module}</directory>
+                  <excludes>
+                    <exclude>index.html</exclude>
+                  </excludes>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+          <execution>
+            <id>copy-index-html</id>
+            <!-- here the phase you need -->
+            <phase>install</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${resource.dir}/templates/</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${basedir}/dist/${dashboard.module}</directory>
+                  <includes>
+                    <include>index.html</include>
+                  </includes>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>com.github.eirslett</groupId>
+        <artifactId>frontend-maven-plugin</artifactId>
+        <configuration>
+          <workingDirectory>${project.basedir}</workingDirectory>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>validate</phase>
+            <id>install node and yarn</id>
+            <goals>
+              <goal>install-node-and-yarn</goal>
+            </goals>
+            <configuration>
+              <nodeVersion>v8.2.1</nodeVersion>
+              <yarnVersion>v0.27.5</yarnVersion>
+            </configuration>
+          </execution>
+          <execution>
+            <phase>process-resources</phase>
+            <id>yarn install</id>
+            <goals>
+              <goal>yarn</goal>
+            </goals>
+            <configuration>
+              <arguments>install</arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <phase>compile</phase>
+            <id>yarn run build</id>
+            <goals>
+              <goal>yarn</goal>
+            </goals>
+            <configuration>
+              <arguments> build:${dashboard.module}</arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <repositories>
+    <repository>
+      <id>Maven Central</id>
+      <name>Central Maven Repository</name>
+      <url>http://repo1.maven.org/maven2/</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>spring-snapshot</id>
+      <name>Spring Maven SNAPSHOT Repository</name>
+      <url>http://repo.springsource.org/libs-snapshot</url>
+    </repository>
+    <repository>
+      <id>spring-repository</id>
+      <url>https://repo.spring.io/libs-release</url>
+    </repository>
+  </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>Maven Central</id>
+      <name>Central Maven Repository</name>
+      <url>http://repo1.maven.org/maven2/</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </pluginRepository>
+    <pluginRepository>
+      <id>spring-snapshots</id>
+      <url>http://repo.spring.io/snapshot</url>
+    </pluginRepository>
+    <pluginRepository>
+      <id>spring-milestones</id>
+      <url>http://repo.spring.io/milestone</url>
+    </pluginRepository>
+  </pluginRepositories>
+</project>
