@@ -1,11 +1,14 @@
 ---
 # https://bosh.io/docs/cli-v2.html#deployment-mgmt
 
-name: redis
+name: elasticsearch
 
 releases:
-- name: osb-redis
+- name: osb-elasticsearch
   version: latest
+- name: osb-monitoring
+  version: latest
+
 
 update:
   canaries: 1

@@ -25,7 +25,7 @@ import java.util.Optional;
 @ConditionalOnBean(BoshProperties.class)
 public class ElasticsearchBoshPlatformService extends BoshPlatformService {
 
-    private static final int defaultPort = 6379;
+    private static final int defaultPort = 9200;
 
     ElasticsearchBoshPlatformService(PlatformRepository repository, CatalogService catalogService,
                              ServicePortAvailabilityVerifier availabilityVerifier,
@@ -33,21 +33,9 @@ public class ElasticsearchBoshPlatformService extends BoshPlatformService {
         super(repository, catalogService, availabilityVerifier, boshProperties, dashboardClient, new ElasticsearchDeploymentManager(boshProperties));
     }
 
-    public void runCreateErrands(ServiceInstance instance, Plan plan, Deployment deployment, Observable<List<ErrandSummary>> errands) throws PlatformException {
-        Task task = super.connection.connection().errands().runErrand(deployment.getName(), "cluster-config").toBlocking().first();
-        super.waitForTaskCompletion(task);
-
-    }
-
-    protected void runUpdateErrands(ServiceInstance instance, Plan plan, Deployment deployment, Observable<List<ErrandSummary>> errands) throws PlatformException {
-        Task task = super.connection.connection().errands().runErrand(deployment.getName(), "cluster-config").toBlocking().first();
-        super.waitForTaskCompletion(task);
-    }
-
     protected void runDeleteErrands(ServiceInstance instance, Deployment deployment, Observable<List<ErrandSummary>> errands) { }
 
-    // TODO: Discuss how the deployment name, which is currently prefixed with "sb-" should be
-    // handled
+    // TODO: Discuss how the deployment name, which is currently prefixed with "sb-" should be handled
     @Override
     protected void updateHosts(ServiceInstance serviceInstance, Plan plan, Deployment deployment) {
         final int port;

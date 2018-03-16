@@ -12,8 +12,7 @@ import java.util.UUID;
 
 public class ElasticsearchDeploymentManager extends DeploymentManager {
 
-    public static final String INSTANCE_GROUP = "redis";
-    public static final String REDIS_PASSWORD = "password";
+    public static final String INSTANCE_GROUP = "elasticsearch";
     public static final String PORT = "port";
 
     ElasticsearchDeploymentManager(BoshProperties boshProperties){
@@ -30,11 +29,6 @@ public class ElasticsearchDeploymentManager extends DeploymentManager {
                 .stream()
                 .filter(i -> i.getName().equals(INSTANCE_GROUP))
                 .findAny().get().getProperties();
-        HashMap<String, Object> redis = (HashMap<String, Object>) manifestProperties.get("redis");
-
-        String randomPassword = UUID.randomUUID().toString().replace("-", "");
-        serviceInstance.setPassword(randomPassword);
-        redis.put(REDIS_PASSWORD, randomPassword);
 
         this.updateInstanceGroupConfiguration(manifest, plan);
     }
