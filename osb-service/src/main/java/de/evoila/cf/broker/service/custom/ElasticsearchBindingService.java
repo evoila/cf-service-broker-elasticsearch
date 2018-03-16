@@ -10,7 +10,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -20,48 +22,67 @@ import java.util.Map;
 @Service
 public class ElasticsearchBindingService extends BindingServiceImpl {
 
-	private Logger log = LoggerFactory.getLogger(getClass());
+    private Logger log = LoggerFactory.getLogger(getClass());
 
-	public void create(ServiceInstance serviceInstance, Plan plan) {
-		log.debug("created Binding");
-	}
+    protected Map<String, Object> createCredentials(String bindingId, ServiceInstance serviceInstance,
+                                                    List<ServerAddress> hosts) {
+        String password = serviceInstance.getPassword();
 
-	public void delete(ServiceInstance serviceInstance, Plan plan) {
-		log.debug("deleted Binding");
-	}
+        String formattedHosts = "";
+        for (ServerAddress host : hosts) {
+            if (formattedHosts != "")
+                formattedHosts += ",";
+            formattedHosts += String.format("%s:%d", host.getIp(), host.getPort());
+        }
 
-	@Override
-	protected Map<String, Object> createCredentials(String bindingId, ServiceInstance serviceInstance,
-			ServerAddress host) throws ServiceBrokerException {
+        String dbURL = String.format("elasticsearch://%s", formattedHosts);
 
-		String dbURL = String.format("http://%s:%d", host.getIp(), host.getPort());
+        Map<String, Object> credentials = new HashMap<>();
+        credentials.put("uri", dbURL);
+        credentials.put("password", password);
+        credentials.put("host", formattedHosts);
+        credentials.put("port", hosts.get(0).getPort());
 
-		Map<String, Object> credentials = new HashMap<String, Object>();
-		credentials.put("uri", dbURL);
+        return credentials;
+    }
 
-		return credentials;
-	}
+    @Override
+    protected void deleteBinding(String bindingId, ServiceInstance serviceInstance) {
+        log.debug("unbind Service");
+    }
 
-	@Override
-	protected void deleteBinding(String bindingId, ServiceInstance serviceInstance) throws ServiceBrokerException {
-		log.debug("unbind Service");
-	}
+    @Override
+    public ServiceInstanceBinding getServiceInstanceBinding(String id) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public ServiceInstanceBinding getServiceInstanceBinding(String id) {
-		throw new UnsupportedOperationException();
-	}
+    /*
+     * (non-Javadoc)
+     *
+     * @see
+     * de.evoila.cf.broker.service.impl.BindingServiceImpl#createCredentials(
+     * java.lang.String, de.evoila.cf.broker.model.ServiceInstance,
+     * de.evoila.cf.broker.model.ServerAddress)
+     */
+    @Override
+    protected Map<String, Object> createCredentials(String bindingId, ServiceInstance serviceInstance,
+                                                    ServerAddress host, Plan plan) {
+        List<ServerAddress> hosts = new ArrayList<>();
+        hosts.add(host);
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.evoila.cf.broker.service.impl.BindingServiceImpl#bindRoute(de.evoila.
-	 * cf.broker.model.ServiceInstance, java.lang.String)
-	 */
-	@Override
-	protected RouteBinding bindRoute(ServiceInstance serviceInstance, String route) {
-		throw new UnsupportedOperationException();
-	}
+        return createCredentials(bindingId, serviceInstance, hosts);
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see
+     * de.evoila.cf.broker.service.impl.BindingServiceImpl#bindRoute(de.evoila.
+     * cf.broker.model.ServiceInstance, java.lang.String)
+     */
+    @Override
+    protected RouteBinding bindRoute(ServiceInstance serviceInstance, String route) {
+        throw new UnsupportedOperationException();
+    }
 
 }

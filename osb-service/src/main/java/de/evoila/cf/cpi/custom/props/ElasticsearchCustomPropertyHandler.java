@@ -18,9 +18,7 @@ public class ElasticsearchCustomPropertyHandler implements DomainBasedCustomProp
 	 * (non-Javadoc)
 	 * 
 	 * @see
-	 * de.evoila.cf.cpi.openstack.custom.props.DomainBasedCustomPropertyHandler#
-	 * addDomainBasedCustomProperties(de.evoila.cf.broker.model.Plan,
-	 * java.util.Map, java.lang.String)
+	 * addDomainBasedCustomProperties(de.evoila.cf.broker.model.Plan, java.util.Map, java.lang.String)
 	 */
 	@Override
 	public Map<String, String> addDomainBasedCustomProperties(Plan plan, Map<String, String> customProperties,

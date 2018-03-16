@@ -1,24 +1,29 @@
+---
+### General Information ###
+info:
+  app:
+    name: Elasticsearch Service Broker
+    description: Elasticsearch Service Broker for Cloud Foundry Service Deployments
+    version: 1.2.0
+
 spring:
-  ### Profile ###
-  profiles: 
-    active: local
+  profiles: default
   ### General Information ###
   application:
-    name: example-dev
+      name: cf-service-broker-elasticsearch
   ### Security ###
   ssl:
-    acceptSelfSigned: true
+    acceptselfsigned: true
   ### Cloud Config ###
   cloud:
     config:
       uri: ${SPRING_CLOUD_CONFIG_URI:http://localhost:8081}
 
-  ### General Information ###
-  info:
-    app:
-      name: Example Service Broker
-      description: This is a example Service Broker, demonstrating the purpose of SB development 
-      version: 1.1.0
+server:
+  port: ${SERVER_PORT:8080}
 
-  server:
-    port: 8080
+### Logging ###
+logging:
+  file: ${LOG_FILE:cf-service-broker-elasticsearch.log}
+  level:
+    root: ${LOG_LEVEL_ROOT:INFO}

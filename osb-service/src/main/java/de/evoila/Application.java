@@ -23,20 +23,16 @@ import de.evoila.cf.cpi.custom.props.ElasticsearchCustomPropertyHandler;
 @SpringBootApplication
 public class Application {
 
-    /*@Value("${elasticsearch.password}")
-    private String elasticsearchPassword;
-
     @Bean(name = "customProperties")
     public Map<String, String> customProperties() {
-        Map<String, String> customProperties = new HashMap<String, String>();
-        customProperties.put("es_password", elasticsearchPassword);
+        Map<String, String> customProperties = new HashMap<>();
         return customProperties;
     }
 
     @Bean
     public DomainBasedCustomPropertyHandler domainPropertyHandler() {
         return new ElasticsearchCustomPropertyHandler();
-    }*/
+    }
 
     public static void main(String[] args) {
         SpringApplication springApplication = new SpringApplication(Application.class);
