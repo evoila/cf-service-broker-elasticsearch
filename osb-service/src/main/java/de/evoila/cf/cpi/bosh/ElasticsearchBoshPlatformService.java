@@ -37,13 +37,6 @@ public class ElasticsearchBoshPlatformService extends BoshPlatformService {
     // TODO: Discuss how the deployment name, which is currently prefixed with "sb-" should be handled
     @Override
     protected void updateHosts(ServiceInstance serviceInstance, Plan plan, Deployment deployment) {
-        final int port;
-        if (plan.getMetadata().containsKey(ElasticsearchDeploymentManager.PORT)) {
-            port = (int) plan.getMetadata().get(ElasticsearchDeploymentManager.PORT);
-        } else {
-            port = defaultPort;
-        }
-
         List<Vm> vms = connection.connection().vms().listDetails("sb-" + serviceInstance.getId()).toBlocking().first();
         if(serviceInstance.getHosts() == null)
             serviceInstance.setHosts(new ArrayList<>());
@@ -51,7 +44,7 @@ public class ElasticsearchBoshPlatformService extends BoshPlatformService {
         serviceInstance.getHosts().clear();
 
         vms.forEach(vm -> {
-            serviceInstance.getHosts().add(new ServerAddress("Host-" + vm.getIndex(), vm.getIps().get(0), port));
+            serviceInstance.getHosts().add(new ServerAddress("Host-" + vm.getIndex(), vm.getIps().get(0), defaultPort));
         });
     }
 
