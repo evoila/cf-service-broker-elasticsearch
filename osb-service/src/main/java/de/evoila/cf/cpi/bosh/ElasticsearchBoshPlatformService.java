@@ -11,7 +11,6 @@ import de.evoila.cf.broker.service.CatalogService;
 import de.evoila.cf.broker.service.availability.ServicePortAvailabilityVerifier;
 import io.bosh.client.deployments.Deployment;
 import io.bosh.client.errands.ErrandSummary;
-import io.bosh.client.tasks.Task;
 import io.bosh.client.vms.Vm;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
@@ -55,4 +54,7 @@ public class ElasticsearchBoshPlatformService extends BoshPlatformService {
             serviceInstance.getHosts().add(new ServerAddress("Host-" + vm.getIndex(), vm.getIps().get(0), port));
         });
     }
+
+    @Override
+    public void postDeleteInstance(ServiceInstance serviceInstance) throws PlatformException {}
 }
