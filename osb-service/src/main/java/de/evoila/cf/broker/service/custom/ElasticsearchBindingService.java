@@ -51,7 +51,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
     }
 
     @Override
-    protected void deleteBinding(String bindingId, ServiceInstance serviceInstance) {}
+    protected void deleteBinding(ServiceInstanceBinding binding, ServiceInstance serviceInstance, Plan plan) {}
 
     @Override
     public ServiceInstanceBinding getServiceInstanceBinding(String id) {
