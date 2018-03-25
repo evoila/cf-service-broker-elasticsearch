@@ -13,7 +13,6 @@ import java.util.UUID;
 public class ElasticsearchDeploymentManager extends DeploymentManager {
 
     public static final String INSTANCE_GROUP = "elasticsearch";
-    public static final String PORT = "port";
 
     ElasticsearchDeploymentManager(BoshProperties boshProperties){
         super(boshProperties);
@@ -27,7 +26,7 @@ public class ElasticsearchDeploymentManager extends DeploymentManager {
         if (customParameters != null && !customParameters.isEmpty())
             properties.putAll(customParameters);
 
-        Map<String, Object> manifestProperties = manifest.getInstance_groups()
+        Map<String, Object> manifestProperties = manifest.getInstanceGroups()
                 .stream()
                 .filter(i -> i.getName().equals(INSTANCE_GROUP))
                 .findAny().get().getProperties();

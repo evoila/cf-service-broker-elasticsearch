@@ -34,18 +34,14 @@ public class ElasticsearchBoshPlatformService extends BoshPlatformService {
 
     protected void runDeleteErrands(ServiceInstance instance, Deployment deployment, Observable<List<ErrandSummary>> errands) { }
 
-    // TODO: Discuss how the deployment name, which is currently prefixed with "sb-" should be handled
     @Override
     protected void updateHosts(ServiceInstance serviceInstance, Plan plan, Deployment deployment) {
-        List<Vm> vms = connection.connection().vms().listDetails("sb-" + serviceInstance.getId()).toBlocking().first();
+        List<Vm> vms = super.getVms(serviceInstance);
         if(serviceInstance.getHosts() == null)
             serviceInstance.setHosts(new ArrayList<>());
-
         serviceInstance.getHosts().clear();
 
-        vms.forEach(vm -> {
-            serviceInstance.getHosts().add(new ServerAddress("Host-" + vm.getIndex(), vm.getIps().get(0), defaultPort));
-        });
+        vms.forEach(vm -> serviceInstance.getHosts().add(super.toServerAddress(vm, defaultPort)));
     }
 
     @Override

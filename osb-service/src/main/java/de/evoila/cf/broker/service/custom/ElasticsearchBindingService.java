@@ -6,6 +6,7 @@ package de.evoila.cf.broker.service.custom;
 import de.evoila.cf.broker.exception.ServiceBrokerException;
 import de.evoila.cf.broker.model.*;
 import de.evoila.cf.broker.service.impl.BindingServiceImpl;
+import de.evoila.cf.broker.util.ServiceInstanceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -25,30 +26,6 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
     private Logger log = LoggerFactory.getLogger(getClass());
 
     private static String URI = "uri";
-    private static String USERNAME = "user";
-    private static String PASSWORD = "password";
-    private static String DATABASE = "database";
-    private static String HOST = "host";
-    private static String PORT = "port";
-
-    protected Map<String, Object> createCredentials(String bindingId, ServiceInstance serviceInstance,
-                                                    List<ServerAddress> hosts) {
-        String formattedHosts = "";
-        for (ServerAddress host : hosts) {
-            if (formattedHosts.length() > 0)
-                formattedHosts = formattedHosts.concat(",");
-            formattedHosts += String.format("%s:%d", host.getIp(), host.getPort());
-        }
-
-        String dbURL = String.format("elasticsearch://%s", formattedHosts);
-
-        Map<String, Object> credentials = new HashMap<>();
-        credentials.put(URI, dbURL);
-        credentials.put(HOST, formattedHosts);
-        credentials.put(PORT, hosts.get(0).getPort());
-
-        return credentials;
-    }
 
     @Override
     protected void deleteBinding(ServiceInstanceBinding binding, ServiceInstance serviceInstance, Plan plan) {}
@@ -59,12 +36,19 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
     }
 
     @Override
-    protected Map<String, Object> createCredentials(String bindingId, ServiceInstance serviceInstance,
-                                                    ServerAddress host, Plan plan) {
-        List<ServerAddress> hosts = new ArrayList<>();
-        hosts.add(host);
+    protected Map<String, Object> createCredentials(String bindingId, ServiceInstance serviceInstance, Plan plan,
+                                                    ServerAddress host) {
+        String endpoint = ServiceInstanceUtils.connectionUrl(serviceInstance.getHosts());
 
-        return createCredentials(bindingId, serviceInstance, hosts);
+        if (host != null)
+            endpoint = host.getIp() + ":" + host.getPort();
+
+        String dbURL = String.format("elasticsearch://%s", endpoint);
+
+        Map<String, Object> credentials = new HashMap<>();
+        credentials.put(URI, dbURL);
+
+        return credentials;
     }
 
     @Override
