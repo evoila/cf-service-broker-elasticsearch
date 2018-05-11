@@ -13,10 +13,10 @@ releases:
   url: https://s3.eu-central-1.amazonaws.com/monitoring-boshrelease-pipeline-ev/osb-monitoring-0.0.3.tgz
   name: osb-monitoring
   version: 0.0.3
-- sha1: 9bb9f37b163800450e687ef73ae19c0c8a5c2624
-  url: https://s3.eu-central-1.amazonaws.com/elasticsearch-boshrelease-pipeline-ev/osb-bosh-elasticsearch-0.0.1.tgz
+- sha1: bbd81e5762f997ddc2dc100162b4174bd70d9861
+  url: https://s3.eu-central-1.amazonaws.com/elasticsearch-boshrelease-pipeline-ev/osb-bosh-elasticsearch-0.0.2.tgz
   name: osb-bosh-elasticsearch
-  version: 0.0.1
+  version: 0.0.2
 update:
   canaries: 1
   canary_watch_time: 15000-30000
