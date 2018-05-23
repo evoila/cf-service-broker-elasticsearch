@@ -4,7 +4,7 @@
 name: elasticsearch
 
 releases:
-- name: osb-elasticsearch
+- name: osb-bosh-elasticsearch
   version: latest
 - name: osb-monitoring
   version: latest
@@ -24,16 +24,16 @@ stemcells:
 instance_groups:
 - name: elasticsearch
   instances: 1
-  vm_type: default
+  vm_type: minimal
   azs:
   - z1
-  persistent_disk_type: default
+  persistent_disk_type: 10GB
   stemcell: default
   networks:
-  - name: default
+  - name: service
   jobs:
   - name: elasticsearch
-    release: osb-elasticsearch
+    release: osb-bosh-elasticsearch
   - name: node_exporter
     release: osb-monitoring
   - name: elasticsearch_exporter
