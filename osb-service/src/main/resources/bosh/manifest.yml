@@ -6,7 +6,7 @@ name: elasticsearch
 releases:
 - name: osb-bosh-elasticsearch
   version: latest
-- name: osb-monitoring
+- name: osb-bosh-monitoring
   version: latest
 
 
@@ -35,9 +35,9 @@ instance_groups:
   - name: elasticsearch
     release: osb-bosh-elasticsearch
   - name: node_exporter
-    release: osb-monitoring
+    release: osb-bosh-monitoring
   - name: elasticsearch_exporter
-    release: osb-monitoring
+    release: osb-bosh-monitoring
   properties:
     elasticsearch:
       cluster_name: elasticsearch-cluster
