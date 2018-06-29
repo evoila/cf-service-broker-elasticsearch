@@ -1,0 +1,46 @@
+---
+# https://bosh.io/docs/cli-v2.html#deployment-mgmt
+
+name: elasticsearch
+
+releases:
+- name: osb-bosh-elasticsearch
+  version: latest
+- name: osb-bosh-monitoring
+  version: latest
+
+
+update:
+  canaries: 1
+  max_in_flight: 2
+  canary_watch_time: 1000-30000
+  update_watch_time: 1000-30000
+
+stemcells:
+- alias: default
+  os: ubuntu-trusty
+
+############################################################
+instance_groups:
+- name: elasticsearch
+  instances: 1
+  vm_type: minimal
+  azs:
+  - z1
+  persistent_disk_type: 10GB
+  stemcell: default
+  networks:
+  - name: service
+  jobs:
+  - name: elasticsearch
+    release: osb-bosh-elasticsearch
+  - name: node_exporter
+    release: osb-bosh-monitoring
+  - name: elasticsearch_exporter
+    release: osb-bosh-monitoring
+  properties:
+    elasticsearch:
+      cluster_name: elasticsearch-cluster
+      node:
+        allow_master: true
+        allow_data: true

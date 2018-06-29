@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <artifactId>osb-elasticsearch</artifactId>
+    <packaging>jar</packaging>
+    <name>osb-elasticsearch</name>
+    <version>1.2.0</version>
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>de.evoila.cf.broker</groupId>
+        <artifactId>repo-parent</artifactId>
+        <version>1.2.0</version>
+        <relativePath>../</relativePath>
+    </parent>
+
+    <properties>
+        <core.version>1.2.0</core.version>
+        <deployment.version>1.2.0</deployment.version>
+        <persistence.version>1.2.0</persistence.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>de.evoila.cf.broker</groupId>
+            <artifactId>core</artifactId>
+            <version>${core.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>de.evoila.cf.broker</groupId>
+            <artifactId>persistence-mongodb</artifactId>
+            <version>${persistence.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>de.evoila.cf.broker</groupId>
+            <artifactId>openstack</artifactId>
+            <version>${deployment.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>de.evoila.cf.broker</groupId>
+            <artifactId>bosh</artifactId>
+            <version>${deployment.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -1,0 +1,66 @@
+---
+name: "((deployment_name))"
+releases:
+- name: osb-java
+  version: latest
+- name: routing
+  version: latest
+- sha1: 5c308231bf7984667752aa322436a32d81d621bb
+  url: https://s3.eu-central-1.amazonaws.com/haproxy-boshrelease-pipeline-ev/osb-haproxy-1.0.4.tgz
+  name: osb-haproxy
+  version: 1.0.4
+- sha1: 32f23dba37703de565edd4fdc8517b48368ad619
+  url: https://s3.eu-central-1.amazonaws.com/monitoring-boshrelease-pipeline-ev/osb-monitoring-0.0.3.tgz
+  name: osb-monitoring
+  version: 0.0.3
+- sha1: bbd81e5762f997ddc2dc100162b4174bd70d9861
+  url: https://s3.eu-central-1.amazonaws.com/elasticsearch-boshrelease-pipeline-ev/osb-bosh-elasticsearch-0.0.2.tgz
+  name: osb-bosh-elasticsearch
+  version: 0.0.2
+update:
+  canaries: 1
+  canary_watch_time: 15000-30000
+  update_watch_time: 15000-30000
+  max_in_flight: 2
+stemcells:
+- alias: default
+  os: ubuntu-trusty
+  version: latest
+instance_groups:
+- name: service-broker
+  azs:
+  - z1
+  instances: 1
+  vm_type: default
+  stemcell: default
+  networks:
+  - name: default
+  jobs:
+  - name: application-runtime
+    release: osb-java
+  - name: route_registrar
+    release: routing
+    consumes:
+      nats:
+        from: nats
+        deployment: cf
+  properties:
+    service-broker:
+      name: "((name))"
+      application: "((application_name))"
+      port: 8080
+      profile: "((application_profile))"
+    cloud-config:
+      endpoint: https://config-server.cf.dev.eu-de-central.msh.host
+      username: admin
+      password: cloudfoundry
+    route_registrar:
+      routes:
+      - name: "((application_name))"
+        registration_interval: 20s
+        port: 8080
+        tags:
+          component: "((application_name))"
+          env: development
+        uris:
+        - "((application_hostname))"

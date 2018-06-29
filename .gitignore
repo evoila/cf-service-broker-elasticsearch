@@ -22,6 +22,8 @@ ca.pem
 */paho*
 *.pem
 *.iml
+*.idea/
 *manifest-with-credentials.yml
 *.pid
 *logging.file_IS_UNDEFINED
+cf-service-broker-redis/.springWebflow
