@@ -1,3 +1,7 @@
+spring:
+  application:
+    name: osb-elasticsearch
+
 ---
 ### General Information ###
 info:
@@ -7,10 +11,10 @@ info:
     version: 1.2.0
 
 spring:
-  profiles: default
+  profiles: local
   ### General Information ###
   application:
-      name: cf-service-broker-elasticsearch
+      name: osb-elasticsearch
   ### Security ###
   ssl:
     acceptselfsigned: true

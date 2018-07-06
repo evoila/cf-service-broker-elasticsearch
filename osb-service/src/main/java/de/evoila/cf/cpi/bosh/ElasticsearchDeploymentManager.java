@@ -5,16 +5,25 @@ import de.evoila.cf.broker.model.Plan;
 import de.evoila.cf.broker.model.ServiceInstance;
 import de.evoila.cf.cpi.bosh.deployment.DeploymentManager;
 import de.evoila.cf.cpi.bosh.deployment.manifest.Manifest;
+import org.assertj.core.util.Sets;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
+import java.util.Set;
 
 public class ElasticsearchDeploymentManager extends DeploymentManager {
 
-    public static final String INSTANCE_GROUP = "elasticsearch";
+    public static final Set<String> INSTANCE_GROUPS = Sets.newLinkedHashSet(
+            "elasticsearch",
+            "ingest_nodes",
+            "coordinating_nodes",
+            "general_nodes",
+            "machine_learning_nodes",
+            "data_nodes",
+            "master_eligible_nodes"
+    );
 
-    ElasticsearchDeploymentManager(BoshProperties boshProperties){
+    ElasticsearchDeploymentManager(BoshProperties boshProperties) {
         super(boshProperties);
     }
 
@@ -28,7 +37,7 @@ public class ElasticsearchDeploymentManager extends DeploymentManager {
 
         Map<String, Object> manifestProperties = manifest.getInstanceGroups()
                 .stream()
-                .filter(i -> i.getName().equals(INSTANCE_GROUP))
+                .filter(i -> INSTANCE_GROUPS.contains(i.getName()))
                 .findAny().get().getProperties();
 
         this.updateInstanceGroupConfiguration(manifest, plan);

@@ -12,6 +12,7 @@ import org.springframework.boot.system.ApplicationPidFileWriter;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.util.Assert;
+import org.springframework.web.client.RestTemplate;
 
 /**
  * @author Johannes Hiemer.
@@ -23,6 +24,11 @@ public class Application {
     public Map<String, String> customProperties() {
         Map<String, String> customProperties = new HashMap<>();
         return customProperties;
+    }
+
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
     }
 
     public static void main(String[] args) {
