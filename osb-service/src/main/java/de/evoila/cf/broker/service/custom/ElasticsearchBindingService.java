@@ -47,6 +47,37 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         this.restTemplate = restTemplate;
     }
 
+    private static ClientMode getClientModeOrDefault(ServiceInstanceBindingRequest bindingRequest) {
+        final Map<String, Object> parameters = bindingRequest.getParameters();
+        Object clientMode = null;
+        if (parameters != null) {
+            clientMode = parameters.get(CLIENT_MODE_IDENTIFIER);
+        }
+
+        if (clientMode == null) {
+            log.warn(MessageFormat.format("Encountered no clientMode when trying to bind request {0}. Used instead default clientMode {1}.", prettifyForLog(bindingRequest), EGRESS.identifier));
+
+            return EGRESS;
+        }
+
+        try {
+            return ClientMode.valueOf(clientMode.toString());
+        } catch (IllegalArgumentException e) {
+            log.warn(MessageFormat.format("Encountered unknown clientMode {0} when trying to bind request {1}. Used instead default clientMode {2}.", clientMode, prettifyForLog(bindingRequest), EGRESS.identifier));
+
+            return EGRESS;
+        }
+    }
+
+    private static String prettifyForLog(ServiceInstanceBindingRequest r) {
+        final BindResource br = r.getBindResource();
+        String bindResourceMessage = MessageFormat.format("{ appGuid: {1}, route: {2} }", br.getAppGuid(), br.getRoute());
+
+        String message = MessageFormat.format("{ serviceDefinitionId: {1}, planId: {2}, appGuid: {3}, bindResource: {4} }", r.getServiceDefinitionId(), r.getPlanId(), r.getAppGuid(), bindResourceMessage);
+
+        return message;
+    }
+
     @Override
     protected void deleteBinding(ServiceInstanceBinding binding, ServiceInstance serviceInstance, Plan plan) {
     }
@@ -153,44 +184,5 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         ClientMode(String identifier) {
             this.identifier = identifier;
         }
-    }
-
-    private static ClientMode getClientModeOrDefault(ServiceInstanceBindingRequest bindingRequest) {
-        final Map<String, Object> parameters = bindingRequest.getParameters();
-        Object clientMode = null;
-        if (parameters != null) {
-            clientMode = parameters.get(CLIENT_MODE_IDENTIFIER);
-        }
-
-        if (clientMode == null) {
-            log.warn(MessageFormat.format("Encountered no clientMode when trying to bind request {0}. Used instead default clientMode {1}.", prettifyForLog(bindingRequest), EGRESS.identifier));
-
-            return EGRESS;
-        }
-
-        try {
-            return ClientMode.valueOf(clientMode.toString());
-        } catch (IllegalArgumentException e) {
-            log.warn(MessageFormat.format("Encountered unknown clientMode {0} when trying to bind request {1}. Used instead default clientMode {2}.", clientMode, prettifyForLog(bindingRequest), EGRESS.identifier));
-
-            return EGRESS;
-        }
-    }
-
-    private static String prettifyForLog(ServiceInstanceBindingRequest r) {
-        String message = MessageFormat.format("{ serviceDefinitionId: {1}, planId: {2}, appGuid: {3}", r.getServiceDefinitionId(), r.getPlanId(), r.getAppGuid());
-
-        if (r.getBindResource() != null) {
-            String bindResource = "{ "
-                    + r.getBindResource().entrySet().stream()
-                    .map(e -> MessageFormat.format("{1}: {2}", e.getKey(), e.getValue()))
-                    .collect(Collectors.joining(", "))
-                    + "}";
-
-            message += ", " + bindResource;
-        }
-        message += " }";
-
-        return message;
     }
 }
