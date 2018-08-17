@@ -55,7 +55,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         }
 
         if (clientMode == null) {
-            log.warn(MessageFormat.format("Encountered no clientMode when trying to bind request {0}. Used instead default clientMode {1}.", prettifyForLog(bindingRequest), EGRESS.identifier));
+            log.warn(MessageFormat.format("Encountered no clientMode when trying to bind request {0}. Used instead default clientMode ''{1}''.", prettifyForLog(bindingRequest), EGRESS.identifier));
 
             return EGRESS;
         }
@@ -63,7 +63,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         try {
             return ClientMode.valueOf(clientMode.toString());
         } catch (IllegalArgumentException e) {
-            log.warn(MessageFormat.format("Encountered unknown clientMode {0} when trying to bind request {1}. Used instead default clientMode {2}.", clientMode, prettifyForLog(bindingRequest), EGRESS.identifier));
+            log.warn(MessageFormat.format("Encountered unknown clientMode {0} when trying to bind request {1}. Used instead default clientMode ''{2}''.", clientMode, prettifyForLog(bindingRequest), EGRESS.identifier));
 
             return EGRESS;
         }
@@ -71,9 +71,9 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
 
     private static String prettifyForLog(ServiceInstanceBindingRequest r) {
         final BindResource br = r.getBindResource();
-        String bindResourceMessage = MessageFormat.format("{ appGuid: {1}, route: {2} }", br.getAppGuid(), br.getRoute());
 
-        String message = MessageFormat.format("{ serviceDefinitionId: {1}, planId: {2}, appGuid: {3}, bindResource: {4} }", r.getServiceDefinitionId(), r.getPlanId(), r.getAppGuid(), bindResourceMessage);
+            bindResourceMessage = MessageFormat.format("'{' appGuid: {0}, route: {1} '}'", br.getAppGuid(), br.getRoute());
+        String message = MessageFormat.format("'{' serviceDefinitionId: {0}, planId: {1}, appGuid: {2}, bindResource: {3} '}'", r.getServiceDefinitionId(), r.getPlanId(), r.getAppGuid(), bindResourceMessage);
 
         return message;
     }
