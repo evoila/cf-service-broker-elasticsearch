@@ -33,7 +33,7 @@ instance_groups:
     consumes:
       database: {from: discovery_nodes}
     provides:
-      database: {as: ingest_nodes}
+      database: {as: ingest_nodes, shared: true}
   - name: smoke-tests
     release: osb-bosh-elasticsearch
     consumes:
@@ -64,7 +64,7 @@ instance_groups:
     consumes:
       database: {from: discovery_nodes}
     provides:
-      database: {as: coordinating_nodes}
+      database: {as: coordinating_nodes, shared: true}
   - name: smoke-tests
     release: osb-bosh-elasticsearch
     consumes:
@@ -92,6 +92,8 @@ instance_groups:
     release: osb-bosh-elasticsearch
     consumes:
       database: {from: discovery_nodes}
+    provides:
+      database: {as: master_eligible_nodes}
   - name: node_exporter
     release: osb-bosh-monitoring
   - name: elasticsearch_exporter
@@ -117,6 +119,8 @@ instance_groups:
     release: osb-bosh-elasticsearch
     consumes:
       database: {from: discovery_nodes}
+    provides:
+      database: {as: data_nodes}
   - name: node_exporter
     release: osb-bosh-monitoring
   - name: elasticsearch_exporter
