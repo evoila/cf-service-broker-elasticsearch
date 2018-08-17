@@ -21,7 +21,7 @@ stemcells:
 
 instance_groups:
 - name: ingest_nodes
-  instances: 1
+  instances: 0
   vm_type: default
   persistent_disk_type: small
   stemcell: default
@@ -52,7 +52,7 @@ instance_groups:
 #      discovery:
 #        minimum_master_nodes: 1 # (Number of master-eligible nodes / 2) - 1
 - name: coordinating_nodes
-  instances: 1
+  instances: 0
   vm_type: default
   persistent_disk_type: small
   stemcell: default
@@ -81,7 +81,7 @@ instance_groups:
 #      discovery:
 #        minimum_master_nodes: 1 # (Number of master-eligible nodes / 2) - 1
 - name: master_eligible_nodes
-  instances: 1
+  instances: 0
   vm_type: default
   persistent_disk_type: small
   stemcell: default
@@ -106,7 +106,7 @@ instance_groups:
 #      discovery:
 #        minimum_master_nodes: 1 # (Number of master-eligible nodes / 2) - 1
 - name: data_nodes
-  instances: 1
+  instances: 0
   vm_type: default
   persistent_disk_type: medium
   stemcell: default
@@ -131,7 +131,7 @@ instance_groups:
 #      discovery:
 #        minimum_master_nodes: 1 # (Number of master-eligible nodes / 2) - 1
 - name: general_nodes
-  instances: 2
+  instances: 0
   vm_type: default
   persistent_disk_type: medium
   stemcell: default
