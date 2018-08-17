@@ -57,7 +57,7 @@ instance_groups:
   persistent_disk_type: small
   stemcell: default
   networks:
-  - name: service-1
+  - name: service
   jobs:
   - name: elasticsearch
     release: osb-bosh-elasticsearch
@@ -86,7 +86,7 @@ instance_groups:
   persistent_disk_type: small
   stemcell: default
   networks:
-  - name: service-1
+  - name: service
   jobs:
   - name: elasticsearch
     release: osb-bosh-elasticsearch
@@ -111,7 +111,7 @@ instance_groups:
   persistent_disk_type: medium
   stemcell: default
   networks:
-  - name: service-1
+  - name: service
   jobs:
   - name: elasticsearch
     release: osb-bosh-elasticsearch
@@ -136,7 +136,7 @@ instance_groups:
   persistent_disk_type: medium
   stemcell: default
   networks:
-  - name: service-1
+  - name: service
   jobs:
   - name: elasticsearch
     release: osb-bosh-elasticsearch
