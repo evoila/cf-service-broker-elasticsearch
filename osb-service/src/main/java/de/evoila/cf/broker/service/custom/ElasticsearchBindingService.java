@@ -85,11 +85,6 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
     }
 
     @Override
-    protected void deleteBinding(ServiceInstanceBinding binding, ServiceInstance serviceInstance, Plan plan) {
-        //TODO
-    }
-
-    @Override
     public ServiceInstanceBinding getServiceInstanceBinding(String id) {
         throw new UnsupportedOperationException();
     }
@@ -198,6 +193,11 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
     @Override
     protected RouteBinding bindRoute(ServiceInstance serviceInstance, String route) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    protected void unbindService(ServiceInstanceBinding binding, ServiceInstance serviceInstance, Plan plan) throws ServiceBrokerException {
+        // TODO
     }
 
     protected enum ClientMode {

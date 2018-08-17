@@ -8,6 +8,7 @@ import de.evoila.cf.broker.util.MapUtils;
 import de.evoila.cf.cpi.bosh.deployment.DeploymentManager;
 import de.evoila.cf.cpi.bosh.deployment.manifest.Manifest;
 import org.assertj.core.util.Sets;
+import org.springframework.core.env.Environment;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
@@ -28,8 +29,8 @@ public class ElasticsearchDeploymentManager extends DeploymentManager {
             "master_eligible_nodes"
     );
 
-    ElasticsearchDeploymentManager(BoshProperties boshProperties) {
-        super(boshProperties);
+    ElasticsearchDeploymentManager(BoshProperties boshProperties, Environment env) {
+        super(boshProperties, env);
     }
 
     @Override
