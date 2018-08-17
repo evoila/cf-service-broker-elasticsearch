@@ -2,6 +2,18 @@
 # https://bosh.io/docs/cli-v2.html#deployment-mgmt
 name: elasticsearch
 
+variables:
+- name: ssl_ca
+  type: certificate
+  options:
+    is_ca: true
+    common_name: elasticsearch-ssl
+- name: transport_ca
+  type: certificate
+  options:
+    is_ca: true
+    common_name: elasticsearch-transport
+
 releases:
 - name: osb-bosh-elasticsearch
   version: latest
@@ -173,5 +185,14 @@ instance_groups:
         allow_ingest: true
       plugins:
       - x-pack: x-pack
+      xpack:
+        security:
+          http:
+            ssl:
+              certificate_authorities: ((ssl_ca.certificate))
+              ca_key: ((ssl_ca.private_key))
+            transport:
+              certificate_authorities: ((transport_ca.certificate))
+              ca_key: ((transport_ca.private_key))
 #      discovery:
 #        minimum_master_nodes: 1 # (Number of master-eligible nodes / 2) - 1
