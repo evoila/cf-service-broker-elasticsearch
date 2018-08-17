@@ -125,29 +125,14 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
 
             final String username = bindingId;
 
-            final SecureRandom random = new SecureRandom();
-            final String password = new BigInteger(130, random).toString(32);
-
             final String adminUserName = SUPER_ADMIN;
-            // TODO move this to credential store request
-            final String adminPassword = serviceInstance.getId();
-            final String adminUri = String.format("%s://%s:%s@%s", protocolMode, adminUserName, adminPassword, endpoint);
+            final String adminPassword = extractUserPassword(serviceInstance, adminUserName);
 
-            final String userCreationUri = String.format(X_PACK_USERS_URI_PATTERN, adminUri);
+            final String userCreationUri = generateUserCreationUri(endpoint, protocolMode, adminUserName, adminPassword);
 
-            final ElasticsearchUser user = new ElasticsearchUser(password, SUPERUSER_ROLE);
+            final String password = generatePassword();
 
-            try {
-                ResponseEntity<?> entity = restTemplate.postForEntity(userCreationUri, user, Object.class);
-
-                final HttpStatus statusCode = entity.getStatusCode();
-                if (!statusCode.is2xxSuccessful()) {
-                    throw new ServiceBrokerException(
-                            new ServiceInstanceBindingException(bindingId, statusCode, "Cannot create user for binding."));
-                }
-            } catch (RestClientException e) {
-                throw new ServiceBrokerException("Cannot create user for binding.");
-            }
+            addUserToElasticsearch(bindingId, userCreationUri, password);
 
             credentials.put("username", username);
             credentials.put("password", password);
@@ -163,6 +148,40 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         credentials.put(URI, dbURL);
 
         return credentials;
+    }
+
+    private void addUserToElasticsearch(String bindingId, String userCreationUri, String password) throws ServiceBrokerException {
+        final ElasticsearchUser user = new ElasticsearchUser(password, MANAGER_ROLE);
+
+        try {
+            ResponseEntity<?> entity = restTemplate.postForEntity(userCreationUri, user, Object.class);
+
+            final HttpStatus statusCode = entity.getStatusCode();
+            if (!statusCode.is2xxSuccessful()) {
+                throw new ServiceBrokerException(
+                        new ServiceInstanceBindingException(bindingId, statusCode, "Cannot create user for binding."));
+            }
+        } catch (RestClientException e) {
+            throw new ServiceBrokerException("Cannot create user for binding.");
+        }
+    }
+
+    private String generatePassword() {
+        final SecureRandom random = new SecureRandom();
+        return new BigInteger(130, random).toString(32);
+    }
+
+    private String extractUserPassword(ServiceInstance serviceInstance, String userName) {
+        return serviceInstance
+                        .getUsers().stream()
+                        .filter(u -> u.getUsername() == userName)
+                        .map(User::getPassword)
+                        .findFirst().orElse("");
+    }
+
+    private String generateUserCreationUri(String endpoint, String protocolMode, String adminUserName, String adminPassword) {
+        final String adminUri = String.format("%s://%s:%s@%s", protocolMode, adminUserName, adminPassword, endpoint);
+        return String.format(X_PACK_USERS_URI_PATTERN, adminUri);
     }
 
     private String clientModeToServerAddressFilter(ClientMode m, Plan p) {
