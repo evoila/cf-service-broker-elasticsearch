@@ -86,6 +86,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
 
     @Override
     protected void deleteBinding(ServiceInstanceBinding binding, ServiceInstance serviceInstance, Plan plan) {
+        //TODO
     }
 
     @Override
