@@ -47,8 +47,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         this.restTemplate = restTemplate;
     }
 
-    private static ClientMode getClientModeOrDefault(ServiceInstanceBindingRequest bindingRequest) {
-        final Map<String, Object> parameters = bindingRequest.getParameters();
+    private static ClientMode getClientModeOrDefault(final Map<String, Object> map) {
         Object clientMode = null;
         if (map != null) {
             clientMode = map.get(CLIENT_MODE_IDENTIFIER);
@@ -96,7 +95,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         log.info(MessageFormat.format("Creating credentials for bind request {0}.", prettifyForLog(serviceInstanceBindingRequest)));
 
         final List<ServerAddress> hosts = serviceInstance.getHosts();
-        final ClientMode clientMode = getClientModeOrDefault(serviceInstanceBindingRequest);
+        final ClientMode clientMode = getClientModeOrDefault(serviceInstanceBindingRequest.getParameters());
         final String serverAddressFilter = clientModeToServerAddressFilter(clientMode, plan);
 
         final Map<String, Object> credentials = new HashMap<>();
@@ -129,7 +128,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
             final String adminUserName = SUPER_ADMIN;
             final String adminPassword = extractUserPassword(serviceInstance, adminUserName);
 
-            final String userCreationUri = generateUserCreationUri(endpoint, protocolMode, adminUserName, adminPassword);
+            final String userCreationUri = generateUsersUri(endpoint, protocolMode, adminUserName, adminPassword);
 
             final String password = generatePassword();
 
@@ -182,7 +181,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                         .findFirst().orElse("");
     }
 
-    private String generateUserCreationUri(String endpoint, String protocolMode, String adminUserName, String adminPassword) {
+    private String generateUsersUri(String endpoint, String protocolMode, String adminUserName, String adminPassword) {
         final String adminUri = String.format("%s://%s:%s@%s", protocolMode, adminUserName, adminPassword, endpoint);
         return String.format(X_PACK_USERS_URI_PATTERN, adminUri);
     }
@@ -204,7 +203,56 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
 
     @Override
     protected void unbindService(ServiceInstanceBinding binding, ServiceInstance serviceInstance, Plan plan) throws ServiceBrokerException {
-        // TODO
+        log.info(MessageFormat.format("Deleting binding ''{0}''.", binding.getId()));
+
+        final List<ServerAddress> hosts = serviceInstance.getHosts();
+        final ClientMode clientMode = getClientModeOrDefault(binding.getCredentials());
+        final String serverAddressFilter = clientModeToServerAddressFilter(clientMode, plan);
+
+        //TODO: iterate through hosts
+        final ServerAddress host = hosts.get(0);
+
+        final String bindingId = binding.getId();
+
+        final String endpoint;
+        if (host != null) {
+            // If explicit server address should be used for connection string (host != null), use this for endpoint.
+            endpoint = host.getIp() + ":" + host.getPort();
+
+        } else {
+            endpoint = ServiceInstanceUtils.connectionUrl(ServiceInstanceUtils.filteredServerAddress(hosts, serverAddressFilter));
+        }
+
+        final String protocolMode;
+        final Object xPackProperty = plan.getMetadata().getCustomParameters().get(PROPERTIES_ELASTICSEARCH_X_PACK_ENABLED);
+        if (xPackProperty != null && xPackProperty.toString().equals("true")) {
+            protocolMode = HTTPS;
+
+            final String username = bindingId;
+
+            final String adminUserName = SUPER_ADMIN;
+            final String adminPassword = extractUserPassword(serviceInstance, adminUserName);
+
+            final String userCreationUri = generateUsersUri(endpoint, protocolMode, adminUserName, adminPassword);
+
+            deleteUserFromElasticsearch(bindingId, userCreationUri);
+
+            log.info(MessageFormat.format("Finished deleting binding ''{0}''.", binding.getId()));
+
+        } else {
+            log.info(MessageFormat.format("Can not delete binding ''{0}''. x-pack not enabled!", binding.getId()));
+        }
+
+    }
+
+    private void deleteUserFromElasticsearch(String bindingId, String usersUri) throws ServiceBrokerException {
+        final String deleteURI = String.format("%s/%s",usersUri,bindingId);
+
+        try {
+            restTemplate.delete(deleteURI);
+        } catch (RestClientException e) {
+            throw new ServiceBrokerException("Cannot delete user for binding.");
+        }
     }
 
     protected enum ClientMode {
