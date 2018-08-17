@@ -94,6 +94,10 @@ instance_groups:
       database: {from: discovery_nodes}
     provides:
       database: {as: master_eligible_nodes}
+  - name: smoke-tests
+    release: osb-bosh-elasticsearch
+    consumes:
+      database: {from: master_eligible_nodes}
   - name: node_exporter
     release: osb-bosh-monitoring
   - name: elasticsearch_exporter
@@ -121,6 +125,10 @@ instance_groups:
       database: {from: discovery_nodes}
     provides:
       database: {as: data_nodes}
+  - name: smoke-tests
+    release: osb-bosh-elasticsearch
+    consumes:
+      database: {from: data_nodes}
   - name: node_exporter
     release: osb-bosh-monitoring
   - name: elasticsearch_exporter
