@@ -29,13 +29,13 @@ instance_groups:
   - name: service
   jobs:
   - name: elasticsearch
-    release: osb-elasticsearch
+    release: osb-bosh-elasticsearch
     consumes:
       database: {from: discovery_nodes}
     provides:
       database: {as: ingest_nodes}
   - name: smoke-tests
-    release: osb-elasticsearch
+    release: osb-bosh-elasticsearch
     consumes:
       database: {from: ingest_nodes}
   - name: node_exporter
@@ -60,13 +60,13 @@ instance_groups:
   - name: service-1
   jobs:
   - name: elasticsearch
-    release: osb-elasticsearch
+    release: osb-bosh-elasticsearch
     consumes:
       database: {from: discovery_nodes}
     provides:
       database: {as: coordinating_nodes}
   - name: smoke-tests
-    release: osb-elasticsearch
+    release: osb-bosh-elasticsearch
     consumes:
       database: {from: coordinating_nodes}
   - name: node_exporter
@@ -89,7 +89,7 @@ instance_groups:
   - name: service-1
   jobs:
   - name: elasticsearch
-    release: osb-elasticsearch
+    release: osb-bosh-elasticsearch
     consumes:
       database: {from: discovery_nodes}
   - name: node_exporter
@@ -114,7 +114,7 @@ instance_groups:
   - name: service-1
   jobs:
   - name: elasticsearch
-    release: osb-elasticsearch
+    release: osb-bosh-elasticsearch
     consumes:
       database: {from: discovery_nodes}
   - name: node_exporter
@@ -139,13 +139,13 @@ instance_groups:
   - name: service-1
   jobs:
   - name: elasticsearch
-    release: osb-elasticsearch
+    release: osb-bosh-elasticsearch
     consumes:
       database: {from: discovery_nodes}
     provides:
       database: {as: discovery_nodes, shared: true}
   - name: smoke-tests
-    release: osb-elasticsearch
+    release: osb-bosh-elasticsearch
     consumes:
       database: {from: discovery_nodes}
   - name: node_exporter
