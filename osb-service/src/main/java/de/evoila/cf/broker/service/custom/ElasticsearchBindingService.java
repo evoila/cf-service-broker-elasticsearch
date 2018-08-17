@@ -72,7 +72,13 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
     private static String prettifyForLog(ServiceInstanceBindingRequest r) {
         final BindResource br = r.getBindResource();
 
+        String bindResourceMessage;
+        if(br == null) {
+            bindResourceMessage = "null";
+        } else {
             bindResourceMessage = MessageFormat.format("'{' appGuid: {0}, route: {1} '}'", br.getAppGuid(), br.getRoute());
+        }
+
         String message = MessageFormat.format("'{' serviceDefinitionId: {0}, planId: {1}, appGuid: {2}, bindResource: {3} '}'", r.getServiceDefinitionId(), r.getPlanId(), r.getAppGuid(), bindResourceMessage);
 
         return message;
