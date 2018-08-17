@@ -50,20 +50,20 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
     private static ClientMode getClientModeOrDefault(ServiceInstanceBindingRequest bindingRequest) {
         final Map<String, Object> parameters = bindingRequest.getParameters();
         Object clientMode = null;
-        if (parameters != null) {
-            clientMode = parameters.get(CLIENT_MODE_IDENTIFIER);
+        if (map != null) {
+            clientMode = map.get(CLIENT_MODE_IDENTIFIER);
         }
 
         if (clientMode == null) {
-            log.warn(MessageFormat.format("Encountered no clientMode when trying to bind request {0}. Used instead default clientMode ''{1}''.", prettifyForLog(bindingRequest), EGRESS.identifier));
+            log.warn(MessageFormat.format("Encountered no clientMode. Used instead default clientMode ''{0}''.", EGRESS.identifier));
 
             return EGRESS;
         }
 
         try {
-            return ClientMode.valueOf(clientMode.toString());
+            return ClientMode.byIdentifier(clientMode.toString());
         } catch (IllegalArgumentException e) {
-            log.warn(MessageFormat.format("Encountered unknown clientMode {0} when trying to bind request {1}. Used instead default clientMode ''{2}''.", clientMode, prettifyForLog(bindingRequest), EGRESS.identifier));
+            log.warn(MessageFormat.format("Encountered unknown clientMode {0}. Used instead default clientMode ''{1}''.", clientMode, EGRESS.identifier));
 
             return EGRESS;
         }
@@ -92,6 +92,9 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
     @Override
     protected Map<String, Object> createCredentials(String bindingId, ServiceInstanceBindingRequest serviceInstanceBindingRequest,
                                                     ServiceInstance serviceInstance, Plan plan, ServerAddress host) throws ServiceBrokerException {
+
+        log.info(MessageFormat.format("Creating credentials for bind request {0}.", prettifyForLog(serviceInstanceBindingRequest)));
+
         final List<ServerAddress> hosts = serviceInstance.getHosts();
         final ClientMode clientMode = getClientModeOrDefault(serviceInstanceBindingRequest);
         final String serverAddressFilter = clientModeToServerAddressFilter(clientMode, plan);
@@ -104,6 +107,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
             endpoint = host.getIp() + ":" + host.getPort();
 
             credentials.put("host", endpoint);
+            credentials.put(CLIENT_MODE_IDENTIFIER, clientMode.identifier);
         } else {
             endpoint = ServiceInstanceUtils.connectionUrl(ServiceInstanceUtils.filteredServerAddress(hosts, serverAddressFilter));
 
@@ -111,6 +115,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                     .map(h -> h.getIp() + ":" + h.getPort())
                     .collect(Collectors.toList());
             credentials.put("hosts", hostsAsString);
+            credentials.put(CLIENT_MODE_IDENTIFIER, clientMode.identifier);
         }
 
         final String protocolMode, userCredentials;
@@ -142,6 +147,8 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
 
         final String dbURL = String.format("%s://%s%s", protocolMode, userCredentials, endpoint);
         credentials.put(URI, dbURL);
+
+        log.info(MessageFormat.format("Finished creating credentials for bind request {0}.", prettifyForLog(serviceInstanceBindingRequest)));
 
         return credentials;
     }
@@ -209,6 +216,17 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
 
         ClientMode(String identifier) {
             this.identifier = identifier;
+        }
+
+        public static ClientMode byIdentifier(String identifier) {
+            switch (identifier) {
+                case "egress":
+                    return EGRESS;
+                case "ingress":
+                    return INGRESS;
+                default:
+                    throw new IllegalArgumentException(String.format("Unknown ClientMode identifier {0}.", identifier));
+            }
         }
     }
 }
