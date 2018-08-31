@@ -12,10 +12,8 @@ import org.springframework.core.env.Environment;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ElasticsearchDeploymentManager extends DeploymentManager {
 
@@ -51,6 +49,7 @@ public class ElasticsearchDeploymentManager extends DeploymentManager {
         final String elasticsearchPassword = generatePassword();
         final String kibanaPassword = generatePassword();
         final String logstashSystemPassword = generatePassword();
+        final String drainMonitoringPassword = generatePassword();
 
         final List<User> users = serviceInstance.getUsers();
         users.add(new User("elastic", elasticsearchPassword));
@@ -63,7 +62,29 @@ public class ElasticsearchDeploymentManager extends DeploymentManager {
             MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.elastic.password", elasticsearchPassword);
             MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.kibana.password", kibanaPassword);
             MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.logstash_system.password", logstashSystemPassword);
+            MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.drain-monitoring.password", drainMonitoringPassword);
         });
+    }
+
+    private List<Map<String, Object>> extractPlugins(Plan plan) {
+        List<Map<String, Object>> plugins = new ArrayList<>();
+
+        final Object elasticsearchPropertiesRaw = plan.getMetadata().getProperties().get("elasticsearch");
+        if (elasticsearchPropertiesRaw instanceof  Map) {
+            final Map<String, Object> elasticsearchProperties = (Map<String, Object>) elasticsearchPropertiesRaw;
+
+            final Object pluginsRaw =  elasticsearchProperties.get("plugins");
+            if (pluginsRaw instanceof Map) {
+                final Map<String, Object> pluginsMap = (Map<String, Object>) pluginsRaw;
+
+                plugins = flattenPropertyList(pluginsMap);
+            }
+        }
+        return plugins;
+    }
+
+    private <E> List<E> flattenPropertyList(Map<String, Object> listAsMap) {
+        return listAsMap.entrySet().stream().map(e -> (E) e.getValue()).collect(Collectors.toList());
     }
 
     private String generatePassword() {

@@ -59,8 +59,6 @@ instance_groups:
       cluster_name: elasticsearch-cluster
       node:
         allow_ingest: true
-      plugins:
-      - x-pack: x-pack
 #      discovery:
 #        minimum_master_nodes: 1 # (Number of master-eligible nodes / 2) - 1
 - name: coordinating_nodes
@@ -88,8 +86,6 @@ instance_groups:
   properties:
     elasticsearch:
       cluster_name: elasticsearch-cluster
-      plugins:
-      - x-pack: x-pack
 #      discovery:
 #        minimum_master_nodes: 1 # (Number of master-eligible nodes / 2) - 1
 - name: master_eligible_nodes
@@ -119,8 +115,6 @@ instance_groups:
       cluster_name: elasticsearch-cluster
       node:
         allow_master: true
-      plugins:
-      - x-pack: x-pack
 #      discovery:
 #        minimum_master_nodes: 1 # (Number of master-eligible nodes / 2) - 1
 - name: data_nodes
@@ -150,8 +144,6 @@ instance_groups:
       cluster_name: elasticsearch-cluster
       node:
         allow_data: true
-      plugins:
-      - x-pack: x-pack
 #      discovery:
 #        minimum_master_nodes: 1 # (Number of master-eligible nodes / 2) - 1
 - name: general_nodes
@@ -183,8 +175,6 @@ instance_groups:
         allow_master: true
         allow_data: true
         allow_ingest: true
-      plugins:
-      - x-pack: x-pack
       xpack:
         security:
           http:
