@@ -208,21 +208,9 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         final List<ServerAddress> hosts = serviceInstance.getHosts();
         final ClientMode clientMode = getClientModeOrDefault(binding.getCredentials());
         final String serverAddressFilter = clientModeToServerAddressFilter(clientMode, plan);
-
-        //TODO: iterate through hosts
-        final ServerAddress host = hosts.get(0);
-
         final String bindingId = binding.getId();
 
-        final String endpoint;
-        if (host != null) {
-            // If explicit server address should be used for connection string (host != null), use this for endpoint.
-            endpoint = host.getIp() + ":" + host.getPort();
-
-        } else {
-            endpoint = ServiceInstanceUtils.connectionUrl(ServiceInstanceUtils.filteredServerAddress(hosts, serverAddressFilter));
-        }
-
+        
         final String protocolMode;
         final Object xPackProperty = plan.getMetadata().getCustomParameters().get(PROPERTIES_ELASTICSEARCH_X_PACK_ENABLED);
         if (xPackProperty != null && xPackProperty.toString().equals("true")) {
@@ -233,11 +221,34 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
             final String adminUserName = SUPER_ADMIN;
             final String adminPassword = extractUserPassword(serviceInstance, adminUserName);
 
-            final String userCreationUri = generateUsersUri(endpoint, protocolMode, adminUserName, adminPassword);
+            boolean success = false;
+            for (ServerAddress a : hosts) {
+                final ServerAddress host = a;
+                final String endpoint;
 
-            deleteUserFromElasticsearch(bindingId, userCreationUri);
+                if (host != null) {
+                    // If explicit server address should be used for connection string (host != null), use this for endpoint.
+                    endpoint = host.getIp() + ":" + host.getPort();
 
-            log.info(MessageFormat.format("Finished deleting binding ''{0}''.", binding.getId()));
+                } else {
+                    endpoint = ServiceInstanceUtils.connectionUrl(ServiceInstanceUtils.filteredServerAddress(hosts, serverAddressFilter));
+                }
+
+                final String userCreationUri = generateUsersUri(endpoint, protocolMode, adminUserName, adminPassword);
+
+                try {
+                   deleteUserFromElasticsearch(bindingId, userCreationUri);
+                   success = true;
+                } catch (ServiceBrokerException e) {
+                    log.info(MessageFormat.format("Failed deleting binding ''{0}'' on endpoint ''{1}''.", binding.getId(), endpoint));
+                }
+            }
+            if (success) {
+                log.info(MessageFormat.format("Finished deleting binding ''{0}''.", binding.getId()));
+            } else {
+                log.info(MessageFormat.format("Can not delete binding ''{0}''. Problem with host!", binding.getId()));
+            }
+
 
         } else {
             log.info(MessageFormat.format("Can not delete binding ''{0}''. x-pack not enabled!", binding.getId()));
