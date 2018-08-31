@@ -19,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,6 @@ import static de.evoila.cf.broker.service.custom.ElasticsearchBindingService.Cli
 @Service
 public class ElasticsearchBindingService extends BindingServiceImpl {
 
-    public static final String PROPERTIES_ELASTICSEARCH_X_PACK_ENABLED = "properties.elasticsearch.x-pack.enabled";
     public static final String HTTP = "http";
     public static final String HTTPS = "https";
     public static final String X_PACK_USERS_URI_PATTERN = "%s/x-pack/users";
@@ -41,6 +41,8 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
     private static final String MANAGER_ROLE = "manager";
     private static final Logger log = LoggerFactory.getLogger(ElasticsearchBindingService.class);
     private static final String URI = "uri";
+    private static final String PROPERTIES_PLUGINS = "elasticsearch.plugins";
+    private static final String PROPERTIES_HTTPS_ENABLED = "elasticsearch.xpack.security.http.ssl.enabled";
     private final RestTemplate restTemplate;
 
     public ElasticsearchBindingService(RestTemplate restTemplate) {
@@ -73,7 +75,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         final BindResource br = r.getBindResource();
 
         String bindResourceMessage;
-        if(br == null) {
+        if (br == null) {
             bindResourceMessage = "null";
         } else {
             bindResourceMessage = MessageFormat.format("'{' appGuid: {0}, route: {1} '}'", br.getAppGuid(), br.getRoute());
@@ -114,10 +116,14 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         }
 
         final String protocolMode, userCredentials;
-        // TODO refactor this conditional!
-        final Object xPackProperty = plan.getMetadata().getCustomParameters().get(PROPERTIES_ELASTICSEARCH_X_PACK_ENABLED);
-        if (xPackProperty != null && xPackProperty.toString().equals("true")) {
-            protocolMode = HTTPS;
+
+        if (pluginsContainXPack(plan)) {
+
+            if (isHttpsEnabled(plan)) {
+                protocolMode = HTTPS;
+            } else {
+                protocolMode = HTTP;
+            }
 
             final String username = bindingId;
 
@@ -140,10 +146,52 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
             userCredentials = "";
         }
 
+
         final String dbURL = String.format("%s://%s%s", protocolMode, userCredentials, endpoint);
         credentials.put(URI, dbURL);
 
         return credentials;
+    }
+
+    private boolean pluginsContainXPack(Plan plan) {
+        Object pluginsRaw = extractProperty(plan.getMetadata().getProperties(), PROPERTIES_PLUGINS);
+
+        return pluginsRaw instanceof  Map && ((Map) pluginsRaw).containsKey("x-pack");
+    }
+
+    private boolean isHttpsEnabled(Plan plan) {
+        Object pluginsRaw = extractProperty(plan.getMetadata().getProperties(), PROPERTIES_HTTPS_ENABLED);
+
+        return pluginsRaw instanceof Boolean && (Boolean) pluginsRaw;
+    }
+
+
+    private Object extractProperty(Object elasticsearchPropertiesRaw, String key) {
+        final List<String> keyElements = Arrays.asList(key.split("\\."));
+
+        return extractProperty(elasticsearchPropertiesRaw, keyElements);
+    }
+
+    private Object extractProperty(Object elasticsearchPropertiesRaw, List<String> keyElements) {
+        if (elasticsearchPropertiesRaw instanceof Map) {
+            final Map<String, Object> elasticsearchProperties = ((Map<String, Object>) elasticsearchPropertiesRaw);
+
+            final Object pluginPropertiesRaw = elasticsearchProperties.get(keyElements.get(0));
+
+
+            if (keyElements.size() == 1) {
+                return pluginPropertiesRaw;
+            } else {
+
+                if (pluginPropertiesRaw == null) {
+                    throw new IllegalArgumentException("Could not access property. Intermediate map is missing.");
+                }
+
+                final List<String> nextStepSelectors = keyElements.subList(1, keyElements.size());
+                return extractProperty(pluginPropertiesRaw, nextStepSelectors);
+            }
+        }
+        throw new IllegalArgumentException("Wrong parameter format. Argument was not of type Map.");
     }
 
     private void addUserToElasticsearch(String bindingId, String userCreationUri, String password) throws ServiceBrokerException {
@@ -169,10 +217,10 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
 
     private String extractUserPassword(ServiceInstance serviceInstance, String userName) {
         return serviceInstance
-                        .getUsers().stream()
-                        .filter(u -> u.getUsername() == userName)
-                        .map(User::getPassword)
-                        .findFirst().orElse("");
+                .getUsers().stream()
+                .filter(u -> u.getUsername().equals(userName))
+                .map(User::getPassword)
+                .findFirst().orElse("");
     }
 
     private String generateUserCreationUri(String endpoint, String protocolMode, String adminUserName, String adminPassword) {
