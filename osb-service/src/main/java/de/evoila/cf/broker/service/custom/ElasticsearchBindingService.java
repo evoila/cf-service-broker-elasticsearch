@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.support.BasicAuthorizationInterceptor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -133,12 +134,16 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
 
             final String adminUserName = SUPER_ADMIN;
             final String adminPassword = extractUserPassword(serviceInstance, adminUserName);
+            final BasicAuthorizationInterceptor basicAuthorizationInterceptor = new BasicAuthorizationInterceptor(adminUserName, adminPassword);
+            restTemplate.getInterceptors().add(basicAuthorizationInterceptor);
 
-            final String userCreationUri = generateUsersUri(endpoint, protocolMode, adminUserName, adminPassword);
+            final String userCreationUri = generateUsersUri(endpoint, protocolMode);
 
             final String password = generatePassword();
 
             addUserToElasticsearch(bindingId, userCreationUri, password);
+
+            restTemplate.getInterceptors().remove(basicAuthorizationInterceptor);
 
             credentials.put("username", username);
             credentials.put("password", password);
@@ -216,7 +221,8 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         final ElasticsearchUser user = new ElasticsearchUser(password, MANAGER_ROLE);
 
         try {
-            ResponseEntity<?> entity = restTemplate.postForEntity(userCreationUri, user, Object.class);
+            String bindingUserUri = userCreationUri + "/" + bindingId;
+            ResponseEntity<?> entity = restTemplate.postForEntity(bindingUserUri, user, ElasticsearchUser.class);
 
             final HttpStatus statusCode = entity.getStatusCode();
             if (!statusCode.is2xxSuccessful()) {
@@ -241,8 +247,8 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                 .findFirst().orElse("");
     }
 
-    private String generateUsersUri(String endpoint, String protocolMode, String adminUserName, String adminPassword) {
-        final String adminUri = String.format("%s://%s:%s@%s", protocolMode, adminUserName, adminPassword, endpoint);
+    private String generateUsersUri(String endpoint, String protocolMode) {
+        final String adminUri = String.format("%s://%s", protocolMode, endpoint);
         return String.format(X_PACK_USERS_URI_PATTERN, adminUri);
     }
 
