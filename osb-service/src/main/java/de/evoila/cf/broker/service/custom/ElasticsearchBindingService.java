@@ -160,13 +160,25 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
     }
 
     private boolean pluginsContainXPack(Plan plan) {
-        Object pluginsRaw = extractProperty(plan.getMetadata().getProperties(), PROPERTIES_PLUGINS);
+        Object pluginsRaw;
+        try {
+            pluginsRaw = extractProperty(plan.getMetadata().getProperties(), PROPERTIES_PLUGINS);
+        } catch (IllegalArgumentException e) {
+            log.error("Property " + PROPERTIES_PLUGINS + " is missing for plan " + plan.getName(), e);
+            return false;
+        }
 
         return pluginsRaw instanceof  Map && ((Map) pluginsRaw).containsKey("x-pack");
     }
 
     private boolean isHttpsEnabled(Plan plan) {
-        Object pluginsRaw = extractProperty(plan.getMetadata().getProperties(), PROPERTIES_HTTPS_ENABLED);
+        Object pluginsRaw;
+        try {
+            pluginsRaw = extractProperty(plan.getMetadata().getProperties(), PROPERTIES_HTTPS_ENABLED);
+        } catch (IllegalArgumentException e) {
+            log.error("Property " + PROPERTIES_HTTPS_ENABLED + " is missing for plan " + plan.getName(), e);
+            return false;
+        }
 
         return pluginsRaw instanceof Boolean && (Boolean) pluginsRaw;
     }
