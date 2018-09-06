@@ -276,7 +276,6 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         final String serverAddressFilter = clientModeToServerAddressFilter(clientMode, plan);
         final String bindingId = binding.getId();
 
-        
         final String protocolMode;
         final Object xPackProperty = plan.getMetadata().getCustomParameters().get(PROPERTIES_ELASTICSEARCH_X_PACK_ENABLED);
         if (xPackProperty != null && xPackProperty.toString().equals("true")) {
@@ -314,12 +313,9 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
             } else {
                 log.info(MessageFormat.format("Can not delete binding ''{0}''. Problem with host!", binding.getId()));
             }
-
-
         } else {
             log.info(MessageFormat.format("Can not delete binding ''{0}''. x-pack not enabled!", binding.getId()));
         }
-
     }
 
     private void deleteUserFromElasticsearch(String bindingId, String usersUri) throws ServiceBrokerException {
