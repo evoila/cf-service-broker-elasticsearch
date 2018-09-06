@@ -39,6 +39,8 @@ instance_groups:
   stemcell: default
   networks:
   - name: service
+  azs:
+  - z1
   jobs:
   - name: elasticsearch
     release: osb-bosh-elasticsearch
@@ -68,6 +70,8 @@ instance_groups:
   stemcell: default
   networks:
   - name: service
+  azs:
+  - z1
   jobs:
   - name: elasticsearch
     release: osb-bosh-elasticsearch
@@ -95,6 +99,8 @@ instance_groups:
   stemcell: default
   networks:
   - name: service
+  azs:
+  - z1
   jobs:
   - name: elasticsearch
     release: osb-bosh-elasticsearch
@@ -124,6 +130,8 @@ instance_groups:
   stemcell: default
   networks:
   - name: service
+  azs:
+  - z1
   jobs:
   - name: elasticsearch
     release: osb-bosh-elasticsearch
@@ -153,6 +161,8 @@ instance_groups:
   stemcell: default
   networks:
   - name: service
+  azs:
+  - z1
   jobs:
   - name: elasticsearch
     release: osb-bosh-elasticsearch
