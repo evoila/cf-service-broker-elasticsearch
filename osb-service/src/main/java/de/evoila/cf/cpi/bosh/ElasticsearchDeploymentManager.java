@@ -44,6 +44,7 @@ public class ElasticsearchDeploymentManager extends DeploymentManager {
                 .filter(i -> INSTANCE_GROUPS.contains(i.getName()))
                 .findAny().get().getProperties();
 
+        this.extractPlugins(plan);
         this.updateInstanceGroupConfiguration(manifest, plan);
 
         final String elasticsearchPassword = generatePassword();
@@ -66,9 +67,7 @@ public class ElasticsearchDeploymentManager extends DeploymentManager {
         });
     }
 
-    private List<Map<String, Object>> extractPlugins(Plan plan) {
-        List<Map<String, Object>> plugins = new ArrayList<>();
-
+    private void extractPlugins(Plan plan) {
         final Object elasticsearchPropertiesRaw = plan.getMetadata().getProperties().get("elasticsearch");
         if (elasticsearchPropertiesRaw instanceof  Map) {
             final Map<String, Object> elasticsearchProperties = (Map<String, Object>) elasticsearchPropertiesRaw;
@@ -77,14 +76,9 @@ public class ElasticsearchDeploymentManager extends DeploymentManager {
             if (pluginsRaw instanceof Map) {
                 final Map<String, Object> pluginsMap = (Map<String, Object>) pluginsRaw;
 
-                plugins = flattenPropertyList(pluginsMap);
+                pluginsMap.entrySet().forEach(e -> elasticsearchProperties.put("plugins", e.getValue()));
             }
         }
-        return plugins;
-    }
-
-    private <E> List<E> flattenPropertyList(Map<String, Object> listAsMap) {
-        return listAsMap.entrySet().stream().map(e -> (E) e.getValue()).collect(Collectors.toList());
     }
 
     private String generatePassword() {
