@@ -76,7 +76,13 @@ public class ElasticsearchDeploymentManager extends DeploymentManager {
             if (pluginsRaw instanceof Map) {
                 final Map<String, Object> pluginsMap = (Map<String, Object>) pluginsRaw;
 
-                pluginsMap.entrySet().forEach(e -> elasticsearchProperties.put("plugins", e.getValue()));
+                for (Object key : pluginsMap.keySet()) {
+                    if(pluginsMap.get(key) instanceof Map) {
+                        elasticsearchProperties.put("plugins", pluginsMap.get(key));
+                    } else {
+                        elasticsearchProperties.put("plugins", pluginsMap);
+                    }
+                }
             }
         }
     }
