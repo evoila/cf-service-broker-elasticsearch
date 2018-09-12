@@ -332,7 +332,8 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         try {
             restTemplate.delete(deleteURI);
         } catch (RestClientException e) {
-            throw new ServiceBrokerException("Cannot delete user for binding.");
+            log.error("Cannot delete user for binding. " + e.getMessage());
+            throw new ServiceBrokerException("Cannot delete user for binding. " + e.getMessage());
         }
     }
 
