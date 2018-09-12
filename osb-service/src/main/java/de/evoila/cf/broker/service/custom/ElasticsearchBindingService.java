@@ -277,9 +277,13 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         final String bindingId = binding.getId();
 
         final String protocolMode;
-        final Object xPackProperty = plan.getMetadata().getCustomParameters().get(PROPERTIES_ELASTICSEARCH_X_PACK_ENABLED);
-        if (xPackProperty != null && xPackProperty.toString().equals("true")) {
-            protocolMode = HTTPS;
+
+        if (pluginsContainXPack(plan)) {
+            if (isHttpsEnabled(plan)) {
+                protocolMode = HTTPS;
+            } else {
+                protocolMode = HTTP;
+            }
 
             final String username = bindingId;
 
