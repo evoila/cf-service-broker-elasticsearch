@@ -289,6 +289,8 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
 
             final String adminUserName = SUPER_ADMIN;
             final String adminPassword = extractUserPassword(serviceInstance, adminUserName);
+            final BasicAuthorizationInterceptor basicAuthorizationInterceptor = new BasicAuthorizationInterceptor(adminUserName, adminPassword);
+            restTemplate.getInterceptors().add(basicAuthorizationInterceptor);
 
             boolean success = false;
             for (ServerAddress a : hosts) {
@@ -303,13 +305,15 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                     endpoint = ServiceInstanceUtils.connectionUrl(ServiceInstanceUtils.filteredServerAddress(hosts, serverAddressFilter));
                 }
 
-                final String userCreationUri = generateUsersUri(endpoint, protocolMode, adminUserName, adminPassword);
+                final String userCreationUri = generateUsersUri(endpoint, protocolMode);
 
                 try {
                    deleteUserFromElasticsearch(bindingId, userCreationUri);
                    success = true;
                 } catch (ServiceBrokerException e) {
                     log.info(MessageFormat.format("Failed deleting binding ''{0}'' on endpoint ''{1}''.", binding.getId(), endpoint));
+                } finally {
+                    restTemplate.getInterceptors().remove(basicAuthorizationInterceptor);
                 }
             }
             if (success) {
