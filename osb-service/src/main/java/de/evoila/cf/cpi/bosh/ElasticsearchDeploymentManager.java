@@ -47,6 +47,9 @@ public class ElasticsearchDeploymentManager extends DeploymentManager {
         this.extractPlugins(plan);
         this.updateInstanceGroupConfiguration(manifest, plan);
 
+        // Set Canaries to minimum master nodes amount to assert, that cluster is healthy
+        manifest.getUpdate().setCanaries(extractMinimumMasterNodes(plan));
+
         final String elasticsearchPassword = generatePassword();
         final String kibanaPassword = generatePassword();
         final String logstashSystemPassword = generatePassword();
@@ -85,6 +88,21 @@ public class ElasticsearchDeploymentManager extends DeploymentManager {
                 }
             }
         }
+    }
+
+    private int extractMinimumMasterNodes(Plan plan) {
+        final Object elasticsearchPropertiesRaw = plan.getMetadata().getProperties().get("elasticsearch");
+        if (elasticsearchPropertiesRaw instanceof  Map) {
+            final Map<String, Object> elasticsearchProperties = (Map<String, Object>) elasticsearchPropertiesRaw;
+
+            final Object discoveryRaw =  elasticsearchProperties.get("discovery");
+            if (discoveryRaw instanceof Map) {
+                final Map<String, Object> discoveryMap = (Map<String, Object>) discoveryRaw;
+
+                return (int) discoveryMap.get("minimum_master_nodes");
+            }
+        }
+        return 1;
     }
 
     private String generatePassword() {
