@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.support.BasicAuthorizationInterceptor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -36,7 +37,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
 
     public static final String HTTP = "http";
     public static final String HTTPS = "https";
-    public static final String X_PACK_USERS_URI_PATTERN = "%s/x-pack/users";
+    public static final String X_PACK_USERS_URI_PATTERN = "%s/_xpack/security/user";
     public static final String SUPER_ADMIN = "elastic";
     private static final String MANAGER_ROLE = "manager";
     private static final Logger log = LoggerFactory.getLogger(ElasticsearchBindingService.class);
@@ -49,23 +50,22 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         this.restTemplate = restTemplate;
     }
 
-    private static ClientMode getClientModeOrDefault(ServiceInstanceBindingRequest bindingRequest) {
-        final Map<String, Object> parameters = bindingRequest.getParameters();
+    private static ClientMode getClientModeOrDefault(final Map<String, Object> map) {
         Object clientMode = null;
-        if (parameters != null) {
-            clientMode = parameters.get(CLIENT_MODE_IDENTIFIER);
+        if (map != null) {
+            clientMode = map.get(CLIENT_MODE_IDENTIFIER);
         }
 
         if (clientMode == null) {
-            log.warn(MessageFormat.format("Encountered no clientMode when trying to bind request {0}. Used instead default clientMode ''{1}''.", prettifyForLog(bindingRequest), EGRESS.identifier));
+            log.warn(MessageFormat.format("Encountered no clientMode. Used instead default clientMode ''{0}''.", EGRESS.identifier));
 
             return EGRESS;
         }
 
         try {
-            return ClientMode.valueOf(clientMode.toString());
+            return ClientMode.byIdentifier(clientMode.toString());
         } catch (IllegalArgumentException e) {
-            log.warn(MessageFormat.format("Encountered unknown clientMode {0} when trying to bind request {1}. Used instead default clientMode ''{2}''.", clientMode, prettifyForLog(bindingRequest), EGRESS.identifier));
+            log.warn(MessageFormat.format("Encountered unknown clientMode {0}. Used instead default clientMode ''{1}''.", clientMode, EGRESS.identifier));
 
             return EGRESS;
         }
@@ -94,8 +94,11 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
     @Override
     protected Map<String, Object> createCredentials(String bindingId, ServiceInstanceBindingRequest serviceInstanceBindingRequest,
                                                     ServiceInstance serviceInstance, Plan plan, ServerAddress host) throws ServiceBrokerException {
+
+        log.info(MessageFormat.format("Creating credentials for bind request {0}.", prettifyForLog(serviceInstanceBindingRequest)));
+
         final List<ServerAddress> hosts = serviceInstance.getHosts();
-        final ClientMode clientMode = getClientModeOrDefault(serviceInstanceBindingRequest);
+        final ClientMode clientMode = getClientModeOrDefault(serviceInstanceBindingRequest.getParameters());
         final String serverAddressFilter = clientModeToServerAddressFilter(clientMode, plan);
 
         final Map<String, Object> credentials = new HashMap<>();
@@ -106,6 +109,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
             endpoint = host.getIp() + ":" + host.getPort();
 
             credentials.put("host", endpoint);
+            credentials.put(CLIENT_MODE_IDENTIFIER, clientMode.identifier);
         } else {
             endpoint = ServiceInstanceUtils.connectionUrl(ServiceInstanceUtils.filteredServerAddress(hosts, serverAddressFilter));
 
@@ -113,6 +117,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                     .map(h -> h.getIp() + ":" + h.getPort())
                     .collect(Collectors.toList());
             credentials.put("hosts", hostsAsString);
+            credentials.put(CLIENT_MODE_IDENTIFIER, clientMode.identifier);
         }
 
         final String protocolMode, userCredentials;
@@ -129,12 +134,16 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
 
             final String adminUserName = SUPER_ADMIN;
             final String adminPassword = extractUserPassword(serviceInstance, adminUserName);
+            final BasicAuthorizationInterceptor basicAuthorizationInterceptor = new BasicAuthorizationInterceptor(adminUserName, adminPassword);
+            restTemplate.getInterceptors().add(basicAuthorizationInterceptor);
 
-            final String userCreationUri = generateUserCreationUri(endpoint, protocolMode, adminUserName, adminPassword);
+            final String userCreationUri = generateUsersUri(endpoint, protocolMode);
 
             final String password = generatePassword();
 
             addUserToElasticsearch(bindingId, userCreationUri, password);
+
+            restTemplate.getInterceptors().remove(basicAuthorizationInterceptor);
 
             credentials.put("username", username);
             credentials.put("password", password);
@@ -150,17 +159,31 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         final String dbURL = String.format("%s://%s%s", protocolMode, userCredentials, endpoint);
         credentials.put(URI, dbURL);
 
+        log.info(MessageFormat.format("Finished creating credentials for bind request {0}.", prettifyForLog(serviceInstanceBindingRequest)));
+
         return credentials;
     }
 
     private boolean pluginsContainXPack(Plan plan) {
-        Object pluginsRaw = extractProperty(plan.getMetadata().getProperties(), PROPERTIES_PLUGINS);
+        Object pluginsRaw;
+        try {
+            pluginsRaw = extractProperty(plan.getMetadata().getProperties(), PROPERTIES_PLUGINS);
+        } catch (IllegalArgumentException e) {
+            log.error("Property " + PROPERTIES_PLUGINS + " is missing for plan " + plan.getName(), e);
+            return false;
+        }
 
         return pluginsRaw instanceof  Map && ((Map) pluginsRaw).containsKey("x-pack");
     }
 
     private boolean isHttpsEnabled(Plan plan) {
-        Object pluginsRaw = extractProperty(plan.getMetadata().getProperties(), PROPERTIES_HTTPS_ENABLED);
+        Object pluginsRaw;
+        try {
+            pluginsRaw = extractProperty(plan.getMetadata().getProperties(), PROPERTIES_HTTPS_ENABLED);
+        } catch (IllegalArgumentException e) {
+            log.error("Property " + PROPERTIES_HTTPS_ENABLED + " is missing for plan " + plan.getName(), e);
+            return false;
+        }
 
         return pluginsRaw instanceof Boolean && (Boolean) pluginsRaw;
     }
@@ -198,7 +221,8 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         final ElasticsearchUser user = new ElasticsearchUser(password, MANAGER_ROLE);
 
         try {
-            ResponseEntity<?> entity = restTemplate.postForEntity(userCreationUri, user, Object.class);
+            String bindingUserUri = userCreationUri + "/" + bindingId;
+            ResponseEntity<?> entity = restTemplate.postForEntity(bindingUserUri, user, ElasticsearchUser.class);
 
             final HttpStatus statusCode = entity.getStatusCode();
             if (!statusCode.is2xxSuccessful()) {
@@ -223,8 +247,8 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                 .findFirst().orElse("");
     }
 
-    private String generateUserCreationUri(String endpoint, String protocolMode, String adminUserName, String adminPassword) {
-        final String adminUri = String.format("%s://%s:%s@%s", protocolMode, adminUserName, adminPassword, endpoint);
+    private String generateUsersUri(String endpoint, String protocolMode) {
+        final String adminUri = String.format("%s://%s", protocolMode, endpoint);
         return String.format(X_PACK_USERS_URI_PATTERN, adminUri);
     }
 
@@ -245,7 +269,72 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
 
     @Override
     protected void unbindService(ServiceInstanceBinding binding, ServiceInstance serviceInstance, Plan plan) throws ServiceBrokerException {
-        // TODO
+        log.info(MessageFormat.format("Deleting binding ''{0}''.", binding.getId()));
+
+        final List<ServerAddress> hosts = serviceInstance.getHosts();
+        final ClientMode clientMode = getClientModeOrDefault(binding.getCredentials());
+        final String serverAddressFilter = clientModeToServerAddressFilter(clientMode, plan);
+        final String bindingId = binding.getId();
+
+        final String protocolMode;
+
+        if (pluginsContainXPack(plan)) {
+            if (isHttpsEnabled(plan)) {
+                protocolMode = HTTPS;
+            } else {
+                protocolMode = HTTP;
+            }
+
+            final String username = bindingId;
+
+            final String adminUserName = SUPER_ADMIN;
+            final String adminPassword = extractUserPassword(serviceInstance, adminUserName);
+            final BasicAuthorizationInterceptor basicAuthorizationInterceptor = new BasicAuthorizationInterceptor(adminUserName, adminPassword);
+            restTemplate.getInterceptors().add(basicAuthorizationInterceptor);
+
+            boolean success = false;
+            for (ServerAddress a : hosts) {
+                final ServerAddress host = a;
+                final String endpoint;
+
+                if (host != null) {
+                    // If explicit server address should be used for connection string (host != null), use this for endpoint.
+                    endpoint = host.getIp() + ":" + host.getPort();
+
+                } else {
+                    endpoint = ServiceInstanceUtils.connectionUrl(ServiceInstanceUtils.filteredServerAddress(hosts, serverAddressFilter));
+                }
+
+                final String userCreationUri = generateUsersUri(endpoint, protocolMode);
+
+                try {
+                   deleteUserFromElasticsearch(bindingId, userCreationUri);
+                   success = true;
+                } catch (ServiceBrokerException e) {
+                    log.info(MessageFormat.format("Failed deleting binding ''{0}'' on endpoint ''{1}''.", binding.getId(), endpoint));
+                } finally {
+                    restTemplate.getInterceptors().remove(basicAuthorizationInterceptor);
+                }
+            }
+            if (success) {
+                log.info(MessageFormat.format("Finished deleting binding ''{0}''.", binding.getId()));
+            } else {
+                log.info(MessageFormat.format("Can not delete binding ''{0}''. Problem with host!", binding.getId()));
+            }
+        } else {
+            log.info(MessageFormat.format("Can not delete binding ''{0}''. x-pack not enabled!", binding.getId()));
+        }
+    }
+
+    private void deleteUserFromElasticsearch(String bindingId, String usersUri) throws ServiceBrokerException {
+        final String deleteURI = String.format("%s/%s",usersUri,bindingId);
+
+        try {
+            restTemplate.delete(deleteURI);
+        } catch (RestClientException e) {
+            log.error("Cannot delete user for binding. " + e.getMessage());
+            throw new ServiceBrokerException("Cannot delete user for binding. " + e.getMessage());
+        }
     }
 
     protected enum ClientMode {
@@ -257,6 +346,17 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
 
         ClientMode(String identifier) {
             this.identifier = identifier;
+        }
+
+        public static ClientMode byIdentifier(String identifier) {
+            switch (identifier) {
+                case "egress":
+                    return EGRESS;
+                case "ingress":
+                    return INGRESS;
+                default:
+                    throw new IllegalArgumentException(String.format("Unknown ClientMode identifier {0}.", identifier));
+            }
         }
     }
 }
