@@ -67,6 +67,20 @@ public class ElasticsearchDeploymentManager extends DeploymentManager {
             MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.kibana.password", kibanaPassword);
             MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.logstash_system.password", logstashSystemPassword);
             MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.drain-monitoring.password", drainMonitoringPassword);
+
+            instanceGroup
+                    .getJobs().stream()
+                    .filter(j -> j.getName().equals("smoke-tests"))
+                    .findFirst()
+                    .ifPresent(j -> {
+                        Map<String, Object> jobProperties = j.getProperties();
+                        if (jobProperties == null) {
+                            jobProperties = new HashMap<>();
+                            j.setProperties(jobProperties);
+                        }
+                        MapUtils.deepInsert(jobProperties, "elasticsearch.username", "elastic");
+                        MapUtils.deepInsert(jobProperties, "elasticsearch.password", elasticsearchPassword);
+                    });
         });
     }
 
