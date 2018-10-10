@@ -47,9 +47,6 @@ public class ElasticsearchDeploymentManager extends DeploymentManager {
         this.extractPlugins(plan);
         this.updateInstanceGroupConfiguration(manifest, plan);
 
-        // Set Canaries to minimum master nodes amount to assert, that cluster is healthy
-        manifest.getUpdate().setCanaries(extractMinimumMasterNodes(plan));
-
         final String elasticsearchPassword = generatePassword();
         final String kibanaPassword = generatePassword();
         final String logstashSystemPassword = generatePassword();
