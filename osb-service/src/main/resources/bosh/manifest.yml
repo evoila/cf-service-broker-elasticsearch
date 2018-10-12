@@ -22,8 +22,8 @@ releases:
 
 update:
   canaries: 1
-  canary_watch_time: 15000-30000
-  update_watch_time: 15000-30000
+  canary_watch_time: 1500-30000
+  update_watch_time: 1500-30000
   max_in_flight: 2
 
 stemcells:
@@ -61,6 +61,15 @@ instance_groups:
       cluster_name: elasticsearch-cluster
       node:
         allow_ingest: true
+      xpack:
+        security:
+          http:
+            ssl:
+              certificate_authorities: ((ssl_ca.certificate))
+              ca_key: ((ssl_ca.private_key))
+            transport:
+              certificate_authorities: ((transport_ca.certificate))
+              ca_key: ((transport_ca.private_key))
 #      discovery:
 #        minimum_master_nodes: 1 # (Number of master-eligible nodes / 2) - 1
 - name: coordinating_nodes
@@ -90,6 +99,15 @@ instance_groups:
   properties:
     elasticsearch:
       cluster_name: elasticsearch-cluster
+      xpack:
+        security:
+          http:
+            ssl:
+              certificate_authorities: ((ssl_ca.certificate))
+              ca_key: ((ssl_ca.private_key))
+            transport:
+              certificate_authorities: ((transport_ca.certificate))
+              ca_key: ((transport_ca.private_key))
 #      discovery:
 #        minimum_master_nodes: 1 # (Number of master-eligible nodes / 2) - 1
 - name: master_eligible_nodes
@@ -121,6 +139,15 @@ instance_groups:
       cluster_name: elasticsearch-cluster
       node:
         allow_master: true
+      xpack:
+        security:
+          http:
+            ssl:
+              certificate_authorities: ((ssl_ca.certificate))
+              ca_key: ((ssl_ca.private_key))
+            transport:
+              certificate_authorities: ((transport_ca.certificate))
+              ca_key: ((transport_ca.private_key))
 #      discovery:
 #        minimum_master_nodes: 1 # (Number of master-eligible nodes / 2) - 1
 - name: data_nodes
@@ -152,6 +179,15 @@ instance_groups:
       cluster_name: elasticsearch-cluster
       node:
         allow_data: true
+      xpack:
+        security:
+          http:
+            ssl:
+              certificate_authorities: ((ssl_ca.certificate))
+              ca_key: ((ssl_ca.private_key))
+            transport:
+              certificate_authorities: ((transport_ca.certificate))
+              ca_key: ((transport_ca.private_key))
 #      discovery:
 #        minimum_master_nodes: 1 # (Number of master-eligible nodes / 2) - 1
 - name: general_nodes
