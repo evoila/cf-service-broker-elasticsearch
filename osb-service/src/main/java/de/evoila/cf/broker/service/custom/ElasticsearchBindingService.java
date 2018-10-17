@@ -6,6 +6,11 @@ package de.evoila.cf.broker.service.custom;
 import de.evoila.cf.broker.exception.ServiceBrokerException;
 import de.evoila.cf.broker.exception.ServiceInstanceBindingException;
 import de.evoila.cf.broker.model.*;
+import de.evoila.cf.broker.repository.BindingRepository;
+import de.evoila.cf.broker.repository.RouteBindingRepository;
+import de.evoila.cf.broker.repository.ServiceDefinitionRepository;
+import de.evoila.cf.broker.repository.ServiceInstanceRepository;
+import de.evoila.cf.broker.service.HAProxyService;
 import de.evoila.cf.broker.service.impl.BindingServiceImpl;
 import de.evoila.cf.broker.util.ServiceInstanceUtils;
 import org.slf4j.Logger;
@@ -46,7 +51,11 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
     private static final String PROPERTIES_HTTPS_ENABLED = "elasticsearch.xpack.security.http.ssl.enabled";
     private final RestTemplate restTemplate;
 
-    public ElasticsearchBindingService(RestTemplate restTemplate) {
+    public ElasticsearchBindingService(BindingRepository bindingRepository, ServiceDefinitionRepository serviceDefinitionRepository,
+                                       ServiceInstanceRepository serviceInstanceRepository, RouteBindingRepository routeBindingRepository,
+                                       HAProxyService haProxyService, RestTemplate restTemplate) {
+        super(bindingRepository, serviceDefinitionRepository, serviceInstanceRepository, routeBindingRepository,
+                haProxyService);
         this.restTemplate = restTemplate;
     }
 
