@@ -153,7 +153,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                 } catch (ServiceBrokerException e) {
                     log.info(MessageFormat.format("Binding failed on host {0}:{1}.", nodeAdress.getIp(), nodeAdress.getPort()));
                 } finally {
-                    if(success) {
+                    if (success) {
                         restTemplate.getInterceptors().remove(basicAuthorizationInterceptor);
 
                         final String dbURL = String.format("%s://%s%s", protocolMode, userCredentials, endpoint);
@@ -200,7 +200,6 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
 
         return pluginsRaw instanceof Boolean && (Boolean) pluginsRaw;
     }
-
 
     private Object extractProperty(Object elasticsearchPropertiesRaw, String key) {
         final List<String> keyElements = Arrays.asList(key.split("\\."));
@@ -282,14 +281,13 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
 
     @Override
     protected void unbindService(ServiceInstanceBinding binding, ServiceInstance serviceInstance, Plan plan) throws ServiceBrokerException {
-        log.info(MessageFormat.format("Deleting binding ''{0}''.", binding.getId()));
-
         final List<ServerAddress> hosts = serviceInstance.getHosts();
         final ClientMode clientMode = getClientModeOrDefault(binding.getCredentials());
         final String serverAddressFilter = clientModeToServerAddressFilter(clientMode, plan);
         final String bindingId = binding.getId();
-
         final String protocolMode;
+
+        log.info(MessageFormat.format("Deleting binding ''{0}''.", bindingId));
 
         if (pluginsContainXPack(plan)) {
             if (isHttpsEnabled(plan)) {
@@ -297,8 +295,6 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
             } else {
                 protocolMode = HTTP;
             }
-
-            final String username = bindingId;
 
             final String adminUserName = SUPER_ADMIN;
             final String adminPassword = extractUserPassword(serviceInstance, adminUserName);
@@ -324,7 +320,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                    deleteUserFromElasticsearch(bindingId, userCreationUri);
                    success = true;
                 } catch (ServiceBrokerException e) {
-                    log.info(MessageFormat.format("Failed deleting binding ''{0}'' on endpoint ''{1}''.", binding.getId(), endpoint));
+                    log.info(MessageFormat.format("Failed deleting binding ''{0}'' on endpoint ''{1}''.", bindingId, endpoint));
                 } finally {
                     restTemplate.getInterceptors().remove(basicAuthorizationInterceptor);
                 }
@@ -335,7 +331,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                 log.info(MessageFormat.format("Can not delete binding ''{0}''. Problem with host!", binding.getId()));
             }
         } else {
-            log.info(MessageFormat.format("Can not delete binding ''{0}''. x-pack not enabled!", binding.getId()));
+            log.info(MessageFormat.format("Can not delete binding ''{0}''. x-pack not enabled!", bindingId));
         }
     }
 
