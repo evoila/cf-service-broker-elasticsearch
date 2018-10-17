@@ -322,13 +322,16 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                 } catch (ServiceBrokerException e) {
                     log.info(MessageFormat.format("Failed deleting binding ''{0}'' on endpoint ''{1}''.", bindingId, endpoint));
                 } finally {
-                    restTemplate.getInterceptors().remove(basicAuthorizationInterceptor);
+                    if (success) {
+                        restTemplate.getInterceptors().remove(basicAuthorizationInterceptor);
+                        log.info(MessageFormat.format("Finished deleting binding ''{0}''.", bindingId));
+                        break;
+                    }
                 }
             }
-            if (success) {
-                log.info(MessageFormat.format("Finished deleting binding ''{0}''.", binding.getId()));
-            } else {
-                log.info(MessageFormat.format("Can not delete binding ''{0}''. Problem with host!", binding.getId()));
+            if (!success) {
+                log.info(MessageFormat.format("Can not delete binding ''{0}''. Problem with host!", bindingId));
+                throw new ServiceBrokerException(MessageFormat.format("Can not delete binding ''{0}''. Problem with host!", bindingId));
             }
         } else {
             log.info(MessageFormat.format("Can not delete binding ''{0}''. x-pack not enabled!", bindingId));
