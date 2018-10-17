@@ -103,7 +103,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
 
         final Map<String, Object> credentials = new HashMap<>();
 
-        final String endpoint;
+        String endpoint;
         if (host != null) {
             // If explicit server address should be used for connection string (host != null), use this for endpoint.
             endpoint = host.getIp() + ":" + host.getPort();
@@ -120,7 +120,8 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
             credentials.put(CLIENT_MODE_IDENTIFIER, clientMode.identifier);
         }
 
-        final String protocolMode, userCredentials;
+        final String protocolMode;
+        String userCredentials = "";
 
         if (pluginsContainXPack(plan)) {
 
@@ -137,30 +138,42 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
             final BasicAuthorizationInterceptor basicAuthorizationInterceptor = new BasicAuthorizationInterceptor(adminUserName, adminPassword);
             restTemplate.getInterceptors().add(basicAuthorizationInterceptor);
 
-            final String userCreationUri = generateUsersUri(endpoint, protocolMode);
+            boolean success = false;
+            for (ServerAddress nodeAdress : hosts) {
+                final String userCreationUri = generateUsersUri(nodeAdress.getIp() + ":" + nodeAdress.getPort(), protocolMode);
+                final String password = generatePassword();
 
-            final String password = generatePassword();
+                try {
+                    addUserToElasticsearch(bindingId, userCreationUri, password);
+                    credentials.put("username", username);
+                    credentials.put("password", password);
+                    userCredentials = String.format("%s:%s@", username, password);
+                    endpoint = String.format("%s:%s", nodeAdress.getIp(), nodeAdress.getPort());
+                    success = true;
+                } catch (ServiceBrokerException e) {
+                    log.info(MessageFormat.format("Binding failed on host {0}:{1}.", nodeAdress.getIp(), nodeAdress.getPort()));
+                } finally {
+                    if(success) {
+                        restTemplate.getInterceptors().remove(basicAuthorizationInterceptor);
 
-            addUserToElasticsearch(bindingId, userCreationUri, password);
+                        final String dbURL = String.format("%s://%s%s", protocolMode, userCredentials, endpoint);
+                        credentials.put(URI, dbURL);
 
-            restTemplate.getInterceptors().remove(basicAuthorizationInterceptor);
-
-            credentials.put("username", username);
-            credentials.put("password", password);
-
-            userCredentials = String.format("%s:%s@", username, password);
+                        break;
+                    }
+                }
+            }
+            if (!success) {
+                log.error("Binding failed on all available hosts.");
+                throw new ServiceBrokerException("Binding failed on all available hosts.");
+            }
         } else {
             protocolMode = HTTP;
-
-            userCredentials = "";
+            final String dbURL = String.format("%s://%s%s", protocolMode, userCredentials, endpoint);
+            credentials.put(URI, dbURL);
         }
 
-
-        final String dbURL = String.format("%s://%s%s", protocolMode, userCredentials, endpoint);
-        credentials.put(URI, dbURL);
-
         log.info(MessageFormat.format("Finished creating credentials for bind request {0}.", prettifyForLog(serviceInstanceBindingRequest)));
-
         return credentials;
     }
 
