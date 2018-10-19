@@ -49,14 +49,12 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
     private static final String URI = "uri";
     private static final String PROPERTIES_PLUGINS = "elasticsearch.plugins";
     private static final String PROPERTIES_HTTPS_ENABLED = "elasticsearch.xpack.security.http.ssl.enabled";
-    private final RestTemplate restTemplate;
 
     public ElasticsearchBindingService(BindingRepository bindingRepository, ServiceDefinitionRepository serviceDefinitionRepository,
                                        ServiceInstanceRepository serviceInstanceRepository, RouteBindingRepository routeBindingRepository,
-                                       HAProxyService haProxyService, RestTemplate restTemplate) {
+                                       HAProxyService haProxyService) {
         super(bindingRepository, serviceDefinitionRepository, serviceInstanceRepository, routeBindingRepository,
                 haProxyService);
-        this.restTemplate = restTemplate;
     }
 
     private static ClientMode getClientModeOrDefault(final Map<String, Object> map) {
@@ -145,6 +143,8 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
             final String adminUserName = SUPER_ADMIN;
             final String adminPassword = extractUserPassword(serviceInstance, adminUserName);
             final BasicAuthorizationInterceptor basicAuthorizationInterceptor = new BasicAuthorizationInterceptor(adminUserName, adminPassword);
+
+            final RestTemplate restTemplate = new RestTemplate();
             restTemplate.getInterceptors().add(basicAuthorizationInterceptor);
 
             final String password = generatePassword();
@@ -154,7 +154,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                 final String userCreationUri = generateUsersUri(nodeAdress.getIp() + ":" + nodeAdress.getPort(), protocolMode);
 
                 try {
-                    addUserToElasticsearch(bindingId, userCreationUri, password);
+                    addUserToElasticsearch(bindingId, userCreationUri, password, restTemplate);
                     credentials.put("username", username);
                     credentials.put("password", password);
                     userCredentials = String.format("%s:%s@", username, password);
@@ -239,7 +239,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         throw new IllegalArgumentException("Wrong parameter format. Argument was not of type Map.");
     }
 
-    private void addUserToElasticsearch(String bindingId, String userCreationUri, String password) throws ServiceBrokerException {
+    private void addUserToElasticsearch(String bindingId, String userCreationUri, String password, RestTemplate restTemplate) throws ServiceBrokerException {
         final ElasticsearchUser user = new ElasticsearchUser(password, MANAGER_ROLE);
 
         try {
@@ -309,6 +309,8 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
             final String adminUserName = SUPER_ADMIN;
             final String adminPassword = extractUserPassword(serviceInstance, adminUserName);
             final BasicAuthorizationInterceptor basicAuthorizationInterceptor = new BasicAuthorizationInterceptor(adminUserName, adminPassword);
+
+            final RestTemplate restTemplate = new RestTemplate();
             restTemplate.getInterceptors().add(basicAuthorizationInterceptor);
 
             boolean success = false;
@@ -327,7 +329,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                 final String userCreationUri = generateUsersUri(endpoint, protocolMode);
 
                 try {
-                   deleteUserFromElasticsearch(bindingId, userCreationUri);
+                   deleteUserFromElasticsearch(bindingId, userCreationUri, restTemplate);
                    success = true;
                 } catch (ServiceBrokerException e) {
                     log.info(MessageFormat.format("Failed deleting binding ''{0}'' on endpoint ''{1}''.", bindingId, endpoint));
@@ -348,7 +350,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         }
     }
 
-    private void deleteUserFromElasticsearch(String bindingId, String usersUri) throws ServiceBrokerException {
+    private void deleteUserFromElasticsearch(String bindingId, String usersUri, RestTemplate restTemplate) throws ServiceBrokerException {
         final String deleteURI = String.format("%s/%s",usersUri,bindingId);
 
         try {
