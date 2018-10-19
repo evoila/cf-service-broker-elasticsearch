@@ -162,15 +162,15 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                     success = true;
                 } catch (ServiceBrokerException e) {
                     log.info(MessageFormat.format("Binding failed on host {0}:{1}.", nodeAdress.getIp(), nodeAdress.getPort()));
-                } finally {
-                    if (success) {
-                        restTemplate.getInterceptors().remove(basicAuthorizationInterceptor);
+                }
 
-                        final String dbURL = String.format("%s://%s%s", protocolMode, userCredentials, endpoint);
-                        credentials.put(URI, dbURL);
+                if (success) {
+                    restTemplate.getInterceptors().remove(basicAuthorizationInterceptor);
 
-                        break;
-                    }
+                    final String dbURL = String.format("%s://%s%s", protocolMode, userCredentials, endpoint);
+                    credentials.put(URI, dbURL);
+
+                    break;
                 }
             }
             if (!success) {
