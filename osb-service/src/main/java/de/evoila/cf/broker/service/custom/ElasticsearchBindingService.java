@@ -147,10 +147,11 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
             final BasicAuthorizationInterceptor basicAuthorizationInterceptor = new BasicAuthorizationInterceptor(adminUserName, adminPassword);
             restTemplate.getInterceptors().add(basicAuthorizationInterceptor);
 
+            final String password = generatePassword();
+
             boolean success = false;
             for (ServerAddress nodeAdress : hosts) {
                 final String userCreationUri = generateUsersUri(nodeAdress.getIp() + ":" + nodeAdress.getPort(), protocolMode);
-                final String password = generatePassword();
 
                 try {
                     addUserToElasticsearch(bindingId, userCreationUri, password);
