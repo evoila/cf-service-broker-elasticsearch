@@ -331,12 +331,12 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                    success = true;
                 } catch (ServiceBrokerException e) {
                     log.info(MessageFormat.format("Failed deleting binding ''{0}'' on endpoint ''{1}''.", bindingId, endpoint));
-                } finally {
-                    if (success) {
-                        restTemplate.getInterceptors().remove(basicAuthorizationInterceptor);
-                        log.info(MessageFormat.format("Finished deleting binding ''{0}''.", bindingId));
-                        break;
-                    }
+                }
+
+                if (success) {
+                    restTemplate.getInterceptors().remove(basicAuthorizationInterceptor);
+                    log.info(MessageFormat.format("Finished deleting binding ''{0}''.", bindingId));
+                    break;
                 }
             }
             if (!success) {
