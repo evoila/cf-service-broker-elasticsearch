@@ -17,11 +17,8 @@ import de.evoila.cf.broker.service.HAProxyService;
 @Service
 @ConditionalOnBean(HAProxyConfiguration.class)
 public class HAProxyServiceImpl extends HAProxyService {
-	public HAProxyServiceImpl(HAProxyConfiguration haProxyConfiguration) {
-		super(haProxyConfiguration);
-	}
 
-    public HAProxyServiceImpl(HAProxyConfiguration haProxyConfiguration) {
+	public HAProxyServiceImpl(HAProxyConfiguration haProxyConfiguration) {
         super(haProxyConfiguration);
     }
 
