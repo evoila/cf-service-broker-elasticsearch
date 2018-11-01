@@ -26,6 +26,7 @@ ca.pem
 *manifest-with-credentials.yml
 *.pid
 *logging.file_IS_UNDEFINED
-cf-service-broker-redis/.springWebflow
 /local-dev-setup/
 *.tgz
+osb-service/src/main/resources/static
+osb-service/src/main/resources/templates
