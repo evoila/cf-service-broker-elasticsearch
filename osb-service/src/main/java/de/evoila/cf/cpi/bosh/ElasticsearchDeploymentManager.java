@@ -1,12 +1,12 @@
 package de.evoila.cf.cpi.bosh;
 
 import de.evoila.cf.broker.bean.BoshProperties;
-import de.evoila.cf.broker.model.Plan;
-import de.evoila.cf.broker.model.ServiceInstance;
-import de.evoila.cf.broker.model.User;
+import de.evoila.cf.broker.model.*;
 import de.evoila.cf.broker.util.MapUtils;
 import de.evoila.cf.cpi.bosh.deployment.DeploymentManager;
+import de.evoila.cf.cpi.bosh.deployment.manifest.InstanceGroup;
 import de.evoila.cf.cpi.bosh.deployment.manifest.Manifest;
+import de.evoila.cf.cpi.bosh.deployment.manifest.instanceGroup.JobV2;
 import org.assertj.core.util.Sets;
 import org.springframework.core.env.Environment;
 
@@ -63,7 +63,21 @@ public class ElasticsearchDeploymentManager extends DeploymentManager {
             MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.elastic.password", elasticsearchPassword);
             MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.kibana.password", kibanaPassword);
             MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.logstash_system.password", logstashSystemPassword);
-            MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.drain-monitoring.password", drainMonitoringPassword);
+            MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.drain-monitor.password", drainMonitoringPassword);
+
+            instanceGroup
+                    .getJobs().stream()
+                    .filter(j -> j.getName().equals("smoke-tests"))
+                    .findFirst()
+                    .ifPresent(j -> {
+                        Map<String, Object> jobProperties = j.getProperties();
+                        if (jobProperties == null) {
+                            jobProperties = new HashMap<>();
+                            j.setProperties(jobProperties);
+                        }
+                        MapUtils.deepInsert(jobProperties, "elasticsearch.username", "elastic");
+                        MapUtils.deepInsert(jobProperties, "elasticsearch.password", elasticsearchPassword);
+                    });
         });
     }
 
@@ -84,6 +98,82 @@ public class ElasticsearchDeploymentManager extends DeploymentManager {
                     }
                 }
             }
+        }
+    }
+
+    private int extractMinimumMasterNodes(Plan plan) {
+        final Object elasticsearchPropertiesRaw = plan.getMetadata().getProperties().get("elasticsearch");
+        if (elasticsearchPropertiesRaw instanceof  Map) {
+            final Map<String, Object> elasticsearchProperties = (Map<String, Object>) elasticsearchPropertiesRaw;
+
+            final Object discoveryRaw =  elasticsearchProperties.get("discovery");
+            if (discoveryRaw instanceof Map) {
+                final Map<String, Object> discoveryMap = (Map<String, Object>) discoveryRaw;
+
+                return (int) discoveryMap.get("minimum_master_nodes");
+            }
+        }
+        return 1;
+    }
+
+    @Override
+    protected void updateInstanceGroupConfiguration(Manifest manifest, Plan plan) {
+        super.updateInstanceGroupConfiguration(manifest, plan);
+
+        Metadata metadata = plan.getMetadata();
+
+        for(InstanceGroup instanceGroup : manifest.getInstanceGroups()) {
+            if(metadata != null) {
+                updateProvidesAndConsumes(instanceGroup, metadata);
+
+
+                InstanceGroupConfig instanceGroupConfig = metadata.getInstanceGroupConfig().stream()
+                        .filter(i -> i.getName() != null && i.getName().equals(instanceGroup.getName()))
+                        .findFirst()
+                        .orElse(null);
+
+                if(metadata.getInstanceGroupConfig() != null && instanceGroupConfig != null) {
+                    updateProvidesAndConsumes(instanceGroup, instanceGroupConfig);
+                }
+            }
+        }
+    }
+
+    private void updateProvidesAndConsumes(InstanceGroup instanceGroup, InstanceGroupConfig instanceGroupConfig) {
+        if(instanceGroupConfig instanceof CustomInstanceGroupConfig) {
+            CustomInstanceGroupConfig customInstanceGroupConfig = (CustomInstanceGroupConfig) instanceGroupConfig;
+
+            if (customInstanceGroupConfig.getProvides() != null) {
+                instanceGroup.getJobs().stream()
+                        .filter(i -> i.getName() != null && i.getName().equals("elasticsearch"))
+                        .findFirst()
+                        .get()
+                        .setProvides(customInstanceGroupConfig.getProvides());
+
+                // change consumes of smoke-test
+                HashMap<String, Object> consumesMap = new HashMap<>();
+
+                customInstanceGroupConfig.getProvides().entrySet().forEach(m -> {
+                    HashMap<String, Object> fromMap = new HashMap<>();
+
+                    if (m.getValue() instanceof HashMap && m.getValue() != null) {
+                        HashMap<String, Object> asMap = (HashMap<String, Object>) m.getValue();
+                        fromMap.put("from", asMap.get("as"));
+
+                        consumesMap.put(m.getKey(), fromMap);
+                    }
+                });
+
+                JobV2 smokeTests = instanceGroup.getJobs().stream()
+                        .filter(i -> i.getName() != null && i.getName().equals("smoke-tests"))
+                        .findFirst()
+                        .orElse(null);
+
+                smokeTests.setConsumes(consumesMap);
+            }
+
+            if (customInstanceGroupConfig.getConsumes() != null)
+                instanceGroup.getJobs().forEach(m -> m.setConsumes(customInstanceGroupConfig.getConsumes()));
         }
     }
 
