@@ -29,8 +29,8 @@ public class ElasticsearchBoshPlatformService extends BoshPlatformService {
     ElasticsearchBoshPlatformService(PlatformRepository repository, CatalogService catalogService,
                                      ServicePortAvailabilityVerifier availabilityVerifier,
                                      BoshProperties boshProperties, Optional<DashboardClient> dashboardClient,
-                                     Environment env) throws PlatformException {
-        super(repository, catalogService, availabilityVerifier, boshProperties, dashboardClient, new ElasticsearchDeploymentManager(boshProperties, env));
+                                     Environment env, BaseElasticsearchDeploymentManager deploymentManager) throws PlatformException {
+        super(repository, catalogService, availabilityVerifier, boshProperties, dashboardClient, deploymentManager);
     }
 
     protected void runDeleteErrands(ServiceInstance instance, Deployment deployment, Observable<List<ErrandSummary>> errands) {
