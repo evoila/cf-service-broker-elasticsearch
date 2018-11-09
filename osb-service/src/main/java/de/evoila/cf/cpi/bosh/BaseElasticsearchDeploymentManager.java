@@ -83,11 +83,6 @@ public abstract class BaseElasticsearchDeploymentManager extends DeploymentManag
                         MapUtils.deepInsert(jobProperties, "elasticsearch.password", elasticsearchPassword);
                     });
         });
-
-        handleCustomParameters(manifest, plan);
-    }
-
-    protected void handleCustomParameters(Manifest manifest, Plan plan) {
     }
 
     private void extractPlugins(Plan plan) {
