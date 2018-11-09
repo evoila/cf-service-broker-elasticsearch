@@ -92,5 +92,37 @@ public class PcfElasticsearchDeploymentManager extends BaseElasticsearchDeployme
 
         plan.getMetadata().getInstanceGroupConfig().add(instanceGroupConfig);
     }
+
+    private void updatePersistentDiskType(String key, Object diskType, Plan plan) {
+        if (diskType instanceof String) {
+            String diskTypeAsString = (String) diskType;
+
+            if (key.equals("node_persistentdisktype")) {
+                plan.getMetadata().getInstanceGroupConfig().stream()
+                        .filter(g -> g.getName().equals("general_nodes"))
+                        .findFirst().ifPresent(config -> config.setPersistentDiskType(diskTypeAsString));
+            }
+            if (key.equals("coordinating_persistentdisktype")) {
+                plan.getMetadata().getInstanceGroupConfig().stream()
+                        .filter(g -> g.getName().equals("coordinating_nodes"))
+                        .findFirst().ifPresent(config -> config.setPersistentDiskType(diskTypeAsString));
+            }
+            if (key.equals("data_persistentdisktype")) {
+                plan.getMetadata().getInstanceGroupConfig().stream()
+                        .filter(g -> g.getName().equals("data_nodes"))
+                        .findFirst().ifPresent(config -> config.setPersistentDiskType(diskTypeAsString));
+            }
+            if (key.equals("master_eligible_persistentdisktype")) {
+                plan.getMetadata().getInstanceGroupConfig().stream()
+                        .filter(g -> g.getName().equals("master_eligible_nodes"))
+                        .findFirst().ifPresent(config -> config.setPersistentDiskType(diskTypeAsString));
+            }
+            if (key.equals("ingest_persistentdisktype")) {
+                plan.getMetadata().getInstanceGroupConfig().stream()
+                        .filter(g -> g.getName().equals("ingest_nodes"))
+                        .findFirst().ifPresent(config -> config.setPersistentDiskType(diskTypeAsString));
+            }
+        }
+    }
     }
 }
