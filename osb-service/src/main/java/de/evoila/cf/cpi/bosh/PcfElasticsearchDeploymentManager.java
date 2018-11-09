@@ -26,6 +26,7 @@ public class PcfElasticsearchDeploymentManager extends BaseElasticsearchDeployme
 
         catalog.getServices().forEach(s -> s.getPlans().forEach(this::handleCustomParameters));
         catalog.getServices().forEach(s -> s.getPlans().forEach(this::determineAndSetEgressInstanceGroup));
+        catalog.getServices().forEach(s -> s.getPlans().forEach(this::determineAndSetIngressInstanceGroup));
     }
 
 
@@ -196,5 +197,32 @@ public class PcfElasticsearchDeploymentManager extends BaseElasticsearchDeployme
         }
 
         plan.getMetadata().setEgressInstanceGroup("data_nodes");
+    }
+
+    private void determineAndSetIngressInstanceGroup(Plan plan) {
+        CustomInstanceGroupConfig coordinatingNodes = plan.getMetadata().getInstanceGroupConfig()
+                .stream()
+                .filter(g -> g.getName().equals("ingest_nodes") && g.getNodes() > 0)
+                .findFirst()
+                .orElse(null);
+
+        if (coordinatingNodes != null) {
+            plan.getMetadata().setIngressInstanceGroup("ingest_nodes");
+            return;
+        }
+
+        CustomInstanceGroupConfig generalNodes = plan.getMetadata().getInstanceGroupConfig()
+                .stream()
+                .filter(g -> g.getName().equals("general_nodes") && g.getNodes() > 0)
+                .findFirst()
+                .orElse(null);
+
+        if (generalNodes != null) {
+            plan.getMetadata().setIngressInstanceGroup("general_nodes");
+            return;
+        }
+
+        plan.getMetadata().setIngressInstanceGroup("data_nodes");
+
     }
 }
