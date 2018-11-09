@@ -124,5 +124,36 @@ public class PcfElasticsearchDeploymentManager extends BaseElasticsearchDeployme
             }
         }
     }
+
+    private void updateVmType(String key, Object vmType, Plan plan) {
+        if (vmType instanceof String) {
+            String vmTypeAsString = (String) vmType;
+
+            if (key.equals("node_vmtype")) {
+                plan.getMetadata().getInstanceGroupConfig().stream()
+                        .filter(g -> g.getName().equals("general_nodes"))
+                        .findFirst().ifPresent(config -> config.setVmType(vmTypeAsString));
+            }
+            if (key.equals("coordinating_vmtype")) {
+                plan.getMetadata().getInstanceGroupConfig().stream()
+                        .filter(g -> g.getName().equals("coordinating_nodes"))
+                        .findFirst().ifPresent(config -> config.setVmType(vmTypeAsString));
+            }
+            if (key.equals("data_vmtype")) {
+                plan.getMetadata().getInstanceGroupConfig().stream()
+                        .filter(g -> g.getName().equals("data_nodes"))
+                        .findFirst().ifPresent(config -> config.setVmType(vmTypeAsString));
+            }
+            if (key.equals("master_vmtype")) {
+                plan.getMetadata().getInstanceGroupConfig().stream()
+                        .filter(g -> g.getName().equals("master_eligible_nodes"))
+                        .findFirst().ifPresent(config -> config.setVmType(vmTypeAsString));
+            }
+            if (key.equals("ingest_vmtype")) {
+                plan.getMetadata().getInstanceGroupConfig().stream()
+                        .filter(g -> g.getName().equals("ingest_nodes"))
+                        .findFirst().ifPresent(config -> config.setVmType(vmTypeAsString));
+            }
+        }
     }
 }
