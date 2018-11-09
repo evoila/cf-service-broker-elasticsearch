@@ -1,12 +1,16 @@
 package de.evoila.cf.cpi.bosh;
 
+import com.esotericsoftware.minlog.Log;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.evoila.cf.broker.bean.BoshProperties;
+import de.evoila.cf.broker.model.Catalog;
+import de.evoila.cf.broker.model.CustomInstanceGroupConfig;
 import de.evoila.cf.broker.model.Plan;
-import de.evoila.cf.cpi.bosh.deployment.manifest.Manifest;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.util.LinkedHashMap;
 
 /**
@@ -16,26 +20,32 @@ import java.util.LinkedHashMap;
 @Component
 public class PcfElasticsearchDeploymentManager extends BaseElasticsearchDeploymentManager {
 
-    PcfElasticsearchDeploymentManager(BoshProperties boshProperties, Environment env) {
+    PcfElasticsearchDeploymentManager(Catalog catalog, BoshProperties boshProperties, Environment env) {
         super(boshProperties, env);
+
+        catalog.getServices().forEach(s -> s.getPlans().forEach(this::handleCustomParameters));
     }
 
-    @Override
-    protected void handleCustomParameters(Manifest manifest, Plan plan) {
+
+    private void handleCustomParameters(Plan plan) {
         Object nodesRaw = plan.getMetadata().getCustomParameters().get("nodes");
 
-        if(nodesRaw instanceof LinkedHashMap) {
-            LinkedHashMap<String, Object> nodesAsMap = (LinkedHashMap<String, Object>) nodesRaw;
-            Object valueRaw = nodesAsMap.get("value");
+        if(nodesRaw instanceof String) {
+            NodeInformation nodeInformation = null;
+            try {
+                nodeInformation = new ObjectMapper().readValue((String)nodesRaw, NodeInformation.class);
+            } catch (IOException e) {
+                Log.error("Could not parse node information in custom parameters");
+            }
 
-            if(valueRaw instanceof String) {
-                String valueAsString = (String) valueRaw;
-                Object selectedOptionRaw = nodesAsMap.get("selected_option");
+            if(nodeInformation != null) {
+                String value = nodeInformation.getValue();
+                LinkedHashMap<String, Object> selectedOption = nodeInformation.getSelectedOption();
 
-                if(valueAsString.equals("dedicate_nodes")) {
-                    handleMultipleInstanceGroups(selectedOptionRaw, manifest);
+                if(value.equals("dedicate_nodes")) {
+                    handleMultipleInstanceGroups(selectedOption, plan);
                 } else {
-                    handleSingleInstanceGroup(valueAsString, selectedOptionRaw, manifest);
+                    handleSingleInstanceGroup(value, selectedOption, plan);
                 }
             }
         }
@@ -44,42 +54,45 @@ public class PcfElasticsearchDeploymentManager extends BaseElasticsearchDeployme
         Object pluginsRaw = plan.getMetadata().getCustomParameters().get("plugins");
         if(pluginsRaw instanceof LinkedHashMap) {
             LinkedHashMap<String, Object> pluginsAsMap = (LinkedHashMap<String, Object>) pluginsRaw;
+
+
         }
     }
 
-    private void handleSingleInstanceGroup(String nodeName, Object selectedOption, Manifest manifest) {
-        int instances = 0;
-        if(selectedOption instanceof LinkedHashMap) {
-            LinkedHashMap<String, Object> selectedOptionMap = (LinkedHashMap<String, Object>) selectedOption;
+    private void handleSingleInstanceGroup(String nodeName, LinkedHashMap<String, Object> selectedOption, Plan plan) {
+        if(selectedOption != null) {
+            Object nodeNumberRaw = selectedOption.get("node_number");
 
-            Object nodeNumberRaw = selectedOptionMap.get("node_number");
-
+            int instances = 0;
             if(nodeNumberRaw instanceof String) {
                 instances = Integer.parseInt((String) nodeNumberRaw);
             }
+            updateNodeCount(nodeName, instances, plan);
+
+            Object persistentDiskType = selectedOption.get("node_persistentdisktype");
+            updatePersistentDiskType("node_persistentdisktype", persistentDiskType, plan);
+
+            Object vmType = selectedOption.get("node_vmtype");
+            updateVmType("node_vmtype", vmType, plan);
         }
-
-        updateNodeCount(nodeName, instances, manifest);
-
-        manifest.getInstanceGroups().stream()
-                .filter((g -> !g.getName().equals(nodeName)))
-                .forEach(i -> i.setInstances(0));
     }
 
-    private void handleMultipleInstanceGroups(Object selectedOption, Manifest manifest) {
-        if(selectedOption instanceof LinkedHashMap) {
-            LinkedHashMap<String, Object> selectedOptionMap = (LinkedHashMap<String, Object>) selectedOption;
+    private void handleMultipleInstanceGroups(LinkedHashMap<String, Object> selectedOption, Plan plan) {
+        if(selectedOption != null) {
 
-            selectedOptionMap.forEach((key, value) -> {
-                if (value instanceof String) {
+            selectedOption.forEach((key, value) -> {
+                if (value instanceof String && key.contains("_nodes")) {
                     int nodeCountAsInt = Integer.parseInt((String) value);
-                    updateNodeCount(key, nodeCountAsInt, manifest);
+                    updateNodeCount(key, nodeCountAsInt, plan);
                 }
 
-                if (value instanceof Integer) {
+                if (value instanceof Integer && key.contains("_nodes")) {
                     int nodeCountAsInt = (Integer) value;
-                    updateNodeCount(key, nodeCountAsInt, manifest);
+                    updateNodeCount(key, nodeCountAsInt, plan);
                 }
+
+                updatePersistentDiskType(key, value, plan);
+                updateVmType(key, value, plan);
             });
         }
 
