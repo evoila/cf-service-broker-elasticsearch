@@ -85,9 +85,12 @@ public class PcfElasticsearchDeploymentManager extends BaseElasticsearchDeployme
 
     }
 
-    private void updateNodeCount(String nodeName, int count, Manifest manifest) {
-        manifest.getInstanceGroups().stream()
-                .filter(g -> g.getName().equals(nodeName))
-                .findFirst().ifPresent(instanceGroup -> instanceGroup.setInstances(count));
+    private void updateNodeCount(String nodeName, int count, Plan plan) {
+        CustomInstanceGroupConfig instanceGroupConfig = new CustomInstanceGroupConfig();
+        instanceGroupConfig.setName(nodeName);
+        instanceGroupConfig.setNodes(count);
+
+        plan.getMetadata().getInstanceGroupConfig().add(instanceGroupConfig);
+    }
     }
 }
