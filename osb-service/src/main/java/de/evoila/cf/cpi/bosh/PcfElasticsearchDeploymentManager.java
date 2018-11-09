@@ -6,6 +6,7 @@ import de.evoila.cf.broker.bean.BoshProperties;
 import de.evoila.cf.broker.model.Catalog;
 import de.evoila.cf.broker.model.CustomInstanceGroupConfig;
 import de.evoila.cf.broker.model.Plan;
+import de.evoila.cf.cpi.bosh.deployment.manifest.InstanceGroup;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -24,6 +25,7 @@ public class PcfElasticsearchDeploymentManager extends BaseElasticsearchDeployme
         super(boshProperties, env);
 
         catalog.getServices().forEach(s -> s.getPlans().forEach(this::handleCustomParameters));
+        catalog.getServices().forEach(s -> s.getPlans().forEach(this::determineAndSetEgressInstanceGroup));
     }
 
 
@@ -168,5 +170,31 @@ public class PcfElasticsearchDeploymentManager extends BaseElasticsearchDeployme
                         .findFirst().ifPresent(config -> config.setVmType(vmTypeAsString));
             }
         }
+    }
+
+    private void determineAndSetEgressInstanceGroup(Plan plan) {
+        CustomInstanceGroupConfig coordinatingNodes = plan.getMetadata().getInstanceGroupConfig()
+                .stream()
+                .filter(g -> g.getName().equals("coordinating_nodes") && g.getNodes() > 0)
+                .findFirst()
+                .orElse(null);
+
+        if (coordinatingNodes != null) {
+            plan.getMetadata().setEgressInstanceGroup("coordinating_nodes");
+            return;
+        }
+
+        CustomInstanceGroupConfig generalNodes = plan.getMetadata().getInstanceGroupConfig()
+                .stream()
+                .filter(g -> g.getName().equals("general_nodes") && g.getNodes() > 0)
+                .findFirst()
+                .orElse(null);
+
+        if (generalNodes != null) {
+            plan.getMetadata().setEgressInstanceGroup("general_nodes");
+            return;
+        }
+
+        plan.getMetadata().setEgressInstanceGroup("data_nodes");
     }
 }
