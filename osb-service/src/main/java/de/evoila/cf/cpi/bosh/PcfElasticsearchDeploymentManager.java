@@ -160,7 +160,7 @@ public class PcfElasticsearchDeploymentManager extends BaseElasticsearchDeployme
                         .filter(g -> g.getName().equals("data_nodes"))
                         .findFirst().ifPresent(config -> config.setVmType(vmTypeAsString));
             }
-            if (key.equals("master_vmtype")) {
+            if (key.equals("master_eligible_vmtype")) {
                 plan.getMetadata().getInstanceGroupConfig().stream()
                         .filter(g -> g.getName().equals("master_eligible_nodes"))
                         .findFirst().ifPresent(config -> config.setVmType(vmTypeAsString));
