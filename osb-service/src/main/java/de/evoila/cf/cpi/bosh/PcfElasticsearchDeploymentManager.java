@@ -7,7 +7,6 @@ import de.evoila.cf.broker.bean.BoshProperties;
 import de.evoila.cf.broker.model.Catalog;
 import de.evoila.cf.broker.model.CustomInstanceGroupConfig;
 import de.evoila.cf.broker.model.Plan;
-import de.evoila.cf.cpi.bosh.deployment.manifest.InstanceGroup;
 import de.evoila.cf.broker.util.MapUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
