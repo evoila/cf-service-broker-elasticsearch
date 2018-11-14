@@ -24,13 +24,13 @@ public class PcfElasticsearchDeploymentManager extends BaseElasticsearchDeployme
     PcfElasticsearchDeploymentManager(Catalog catalog, BoshProperties boshProperties, Environment env) {
         super(boshProperties, env);
 
-        catalog.getServices().forEach(s -> s.getPlans().forEach(this::handleCustomParameters));
+        catalog.getServices().forEach(s -> s.getPlans().forEach(this::parseInstanceGroups));
         catalog.getServices().forEach(s -> s.getPlans().forEach(this::determineAndSetEgressInstanceGroup));
         catalog.getServices().forEach(s -> s.getPlans().forEach(this::determineAndSetIngressInstanceGroup));
     }
 
 
-    private void handleCustomParameters(Plan plan) {
+    private void parseInstanceGroups(Plan plan) {
         Object nodesRaw = plan.getMetadata().getCustomParameters().get("nodes");
 
         if(nodesRaw instanceof String) {
@@ -51,14 +51,6 @@ public class PcfElasticsearchDeploymentManager extends BaseElasticsearchDeployme
                     handleSingleInstanceGroup(value, selectedOption, plan);
                 }
             }
-        }
-
-        //TODO: handle plugins
-        Object pluginsRaw = plan.getMetadata().getCustomParameters().get("plugins");
-        if(pluginsRaw instanceof LinkedHashMap) {
-            LinkedHashMap<String, Object> pluginsAsMap = (LinkedHashMap<String, Object>) pluginsRaw;
-
-
         }
     }
 
