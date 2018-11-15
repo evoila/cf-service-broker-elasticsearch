@@ -1,18 +1,20 @@
 package de.evoila.cf.cpi.bosh;
 
 import com.esotericsoftware.minlog.Log;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.evoila.cf.broker.bean.BoshProperties;
 import de.evoila.cf.broker.model.Catalog;
 import de.evoila.cf.broker.model.CustomInstanceGroupConfig;
 import de.evoila.cf.broker.model.Plan;
-import de.evoila.cf.cpi.bosh.deployment.manifest.InstanceGroup;
+import de.evoila.cf.broker.util.MapUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * @author Michael Hahn
@@ -24,13 +26,14 @@ public class PcfElasticsearchDeploymentManager extends BaseElasticsearchDeployme
     PcfElasticsearchDeploymentManager(Catalog catalog, BoshProperties boshProperties, Environment env) {
         super(boshProperties, env);
 
-        catalog.getServices().forEach(s -> s.getPlans().forEach(this::handleCustomParameters));
+        catalog.getServices().forEach(s -> s.getPlans().forEach(this::parseInstanceGroups));
+        catalog.getServices().forEach(s -> s.getPlans().forEach(this::parsePlugins));
         catalog.getServices().forEach(s -> s.getPlans().forEach(this::determineAndSetEgressInstanceGroup));
         catalog.getServices().forEach(s -> s.getPlans().forEach(this::determineAndSetIngressInstanceGroup));
     }
 
 
-    private void handleCustomParameters(Plan plan) {
+    private void parseInstanceGroups(Plan plan) {
         Object nodesRaw = plan.getMetadata().getCustomParameters().get("nodes");
 
         if(nodesRaw instanceof String) {
@@ -52,13 +55,33 @@ public class PcfElasticsearchDeploymentManager extends BaseElasticsearchDeployme
                 }
             }
         }
+    }
 
-        //TODO: handle plugins
+    private void parsePlugins(Plan plan) {
         Object pluginsRaw = plan.getMetadata().getCustomParameters().get("plugins");
-        if(pluginsRaw instanceof LinkedHashMap) {
-            LinkedHashMap<String, Object> pluginsAsMap = (LinkedHashMap<String, Object>) pluginsRaw;
 
+        if (pluginsRaw instanceof String) {
+            final String pluginsAsString = (String) pluginsRaw;
+            final ObjectMapper mapper = new ObjectMapper();
 
+            List<PluginInformation> pluginList = null;
+            try {
+                pluginList = mapper.readValue(pluginsAsString, new TypeReference<List<PluginInformation>>(){});
+            } catch (IOException e) {
+                Log.error("Could not parse plugin information in custom parameters");
+            }
+
+            if (pluginList != null) {
+                pluginList.forEach(p -> {
+                    final String pluginName = p.getName();
+                    if (pluginName != null && !pluginName.isEmpty()) {
+
+                        final String pluginSource = (p.getSource() == null || p.getSource().isEmpty()) ? pluginName : p.getSource();
+
+                        MapUtils.deepInsert(plan.getMetadata().getProperties(), "elasticsearch.plugins." + pluginName, pluginSource);
+                    }
+                });
+            }
         }
     }
 
@@ -160,7 +183,7 @@ public class PcfElasticsearchDeploymentManager extends BaseElasticsearchDeployme
                         .filter(g -> g.getName().equals("data_nodes"))
                         .findFirst().ifPresent(config -> config.setVmType(vmTypeAsString));
             }
-            if (key.equals("master_vmtype")) {
+            if (key.equals("master_eligible_vmtype")) {
                 plan.getMetadata().getInstanceGroupConfig().stream()
                         .filter(g -> g.getName().equals("master_eligible_nodes"))
                         .findFirst().ifPresent(config -> config.setVmType(vmTypeAsString));
