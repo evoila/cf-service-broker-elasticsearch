@@ -122,7 +122,7 @@ public class PcfElasticsearchDeploymentManager extends BaseElasticsearchDeployme
                 updateVmType(key, value, plan);
             });
 
-            updateNodeCount("general_nodes", 0, plan);
+            updateNodeCount(GENERAL_NODES, 0, plan);
         }
 
     }
@@ -141,27 +141,27 @@ public class PcfElasticsearchDeploymentManager extends BaseElasticsearchDeployme
 
             if (key.equals("node_persistentdisktype")) {
                 plan.getMetadata().getInstanceGroupConfig().stream()
-                        .filter(g -> g.getName().equals("general_nodes"))
+                        .filter(g -> g.getName().equals(GENERAL_NODES))
                         .findFirst().ifPresent(config -> config.setPersistentDiskType(diskTypeAsString));
             }
             if (key.equals("coordinating_persistentdisktype")) {
                 plan.getMetadata().getInstanceGroupConfig().stream()
-                        .filter(g -> g.getName().equals("coordinating_nodes"))
+                        .filter(g -> g.getName().equals(COORDINATING_NODES))
                         .findFirst().ifPresent(config -> config.setPersistentDiskType(diskTypeAsString));
             }
             if (key.equals("data_persistentdisktype")) {
                 plan.getMetadata().getInstanceGroupConfig().stream()
-                        .filter(g -> g.getName().equals("data_nodes"))
+                        .filter(g -> g.getName().equals(DATA_NODES))
                         .findFirst().ifPresent(config -> config.setPersistentDiskType(diskTypeAsString));
             }
             if (key.equals("master_eligible_persistentdisktype")) {
                 plan.getMetadata().getInstanceGroupConfig().stream()
-                        .filter(g -> g.getName().equals("master_eligible_nodes"))
+                        .filter(g -> g.getName().equals(MASTER_ELIGIBLE_NODES))
                         .findFirst().ifPresent(config -> config.setPersistentDiskType(diskTypeAsString));
             }
             if (key.equals("ingest_persistentdisktype")) {
                 plan.getMetadata().getInstanceGroupConfig().stream()
-                        .filter(g -> g.getName().equals("ingest_nodes"))
+                        .filter(g -> g.getName().equals(INGEST_NODES))
                         .findFirst().ifPresent(config -> config.setPersistentDiskType(diskTypeAsString));
             }
         }
@@ -173,27 +173,27 @@ public class PcfElasticsearchDeploymentManager extends BaseElasticsearchDeployme
 
             if (key.equals("node_vmtype")) {
                 plan.getMetadata().getInstanceGroupConfig().stream()
-                        .filter(g -> g.getName().equals("general_nodes"))
+                        .filter(g -> g.getName().equals(GENERAL_NODES))
                         .findFirst().ifPresent(config -> config.setVmType(vmTypeAsString));
             }
             if (key.equals("coordinating_vmtype")) {
                 plan.getMetadata().getInstanceGroupConfig().stream()
-                        .filter(g -> g.getName().equals("coordinating_nodes"))
+                        .filter(g -> g.getName().equals(COORDINATING_NODES))
                         .findFirst().ifPresent(config -> config.setVmType(vmTypeAsString));
             }
             if (key.equals("data_vmtype")) {
                 plan.getMetadata().getInstanceGroupConfig().stream()
-                        .filter(g -> g.getName().equals("data_nodes"))
+                        .filter(g -> g.getName().equals(DATA_NODES))
                         .findFirst().ifPresent(config -> config.setVmType(vmTypeAsString));
             }
             if (key.equals("master_eligible_vmtype")) {
                 plan.getMetadata().getInstanceGroupConfig().stream()
-                        .filter(g -> g.getName().equals("master_eligible_nodes"))
+                        .filter(g -> g.getName().equals(MASTER_ELIGIBLE_NODES))
                         .findFirst().ifPresent(config -> config.setVmType(vmTypeAsString));
             }
             if (key.equals("ingest_vmtype")) {
                 plan.getMetadata().getInstanceGroupConfig().stream()
-                        .filter(g -> g.getName().equals("ingest_nodes"))
+                        .filter(g -> g.getName().equals(INGEST_NODES))
                         .findFirst().ifPresent(config -> config.setVmType(vmTypeAsString));
             }
         }
@@ -202,71 +202,71 @@ public class PcfElasticsearchDeploymentManager extends BaseElasticsearchDeployme
     private void determineAndSetEgressInstanceGroup(Plan plan) {
         CustomInstanceGroupConfig coordinatingNodes = plan.getMetadata().getInstanceGroupConfig()
                 .stream()
-                .filter(g -> g.getName().equals("coordinating_nodes") && g.getNodes() > 0)
+                .filter(g -> g.getName().equals(COORDINATING_NODES) && g.getNodes() > 0)
                 .findFirst()
                 .orElse(null);
 
         if (coordinatingNodes != null) {
-            plan.getMetadata().setEgressInstanceGroup("coordinating_nodes");
+            plan.getMetadata().setEgressInstanceGroup(COORDINATING_NODES);
             return;
         }
 
         CustomInstanceGroupConfig generalNodes = plan.getMetadata().getInstanceGroupConfig()
                 .stream()
-                .filter(g -> g.getName().equals("general_nodes") && g.getNodes() > 0)
+                .filter(g -> g.getName().equals(GENERAL_NODES) && g.getNodes() > 0)
                 .findFirst()
                 .orElse(null);
 
         if (generalNodes != null) {
-            plan.getMetadata().setEgressInstanceGroup("general_nodes");
+            plan.getMetadata().setEgressInstanceGroup(GENERAL_NODES);
             return;
         }
 
-        plan.getMetadata().setEgressInstanceGroup("data_nodes");
+        plan.getMetadata().setEgressInstanceGroup(DATA_NODES);
     }
 
     private void determineAndSetIngressInstanceGroup(Plan plan) {
         CustomInstanceGroupConfig coordinatingNodes = plan.getMetadata().getInstanceGroupConfig()
                 .stream()
-                .filter(g -> g.getName().equals("ingest_nodes") && g.getNodes() > 0)
+                .filter(g -> g.getName().equals(INGEST_NODES) && g.getNodes() > 0)
                 .findFirst()
                 .orElse(null);
 
         if (coordinatingNodes != null) {
-            plan.getMetadata().setIngressInstanceGroup("ingest_nodes");
+            plan.getMetadata().setIngressInstanceGroup(INGEST_NODES);
             return;
         }
 
         CustomInstanceGroupConfig generalNodes = plan.getMetadata().getInstanceGroupConfig()
                 .stream()
-                .filter(g -> g.getName().equals("general_nodes") && g.getNodes() > 0)
+                .filter(g -> g.getName().equals(GENERAL_NODES) && g.getNodes() > 0)
                 .findFirst()
                 .orElse(null);
 
         if (generalNodes != null) {
-            plan.getMetadata().setIngressInstanceGroup("general_nodes");
+            plan.getMetadata().setIngressInstanceGroup(GENERAL_NODES);
             return;
         }
 
-        plan.getMetadata().setIngressInstanceGroup("data_nodes");
+        plan.getMetadata().setIngressInstanceGroup(DATA_NODES);
 
     }
 
     private void setDatabaseProvidersAndConsumers(Plan plan) {
         final CustomInstanceGroupConfig generalNodes = plan.getMetadata().getInstanceGroupConfig()
                 .stream()
-                .filter(c -> c.getName().equals("general_nodes"))
+                .filter(c -> c.getName().equals(GENERAL_NODES))
                 .findFirst()
                 .orElse(null);
 
         if (generalNodes != null && generalNodes.getNodes() == 0) {
             final CustomInstanceGroupConfig masterEligibleNodes = plan.getMetadata().getInstanceGroupConfig()
                     .stream()
-                    .filter(c -> c.getName().equals("master_eligible_nodes"))
+                    .filter(c -> c.getName().equals(MASTER_ELIGIBLE_NODES))
                     .findFirst()
                     .orElse(null);
 
-            setProvidesForInstanceGroup(generalNodes, "general_nodes");
+            setProvidesForInstanceGroup(generalNodes, GENERAL_NODES);
             setProvidesForInstanceGroup(masterEligibleNodes, "discovery_nodes");
         }
     }
