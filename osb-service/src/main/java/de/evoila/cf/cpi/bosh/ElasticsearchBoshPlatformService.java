@@ -1,10 +1,9 @@
 package de.evoila.cf.cpi.bosh;
 
 import de.evoila.cf.broker.bean.BoshProperties;
-import de.evoila.cf.broker.exception.PlatformException;
 import de.evoila.cf.broker.model.DashboardClient;
-import de.evoila.cf.broker.model.Plan;
 import de.evoila.cf.broker.model.ServiceInstance;
+import de.evoila.cf.broker.model.catalog.plan.Plan;
 import de.evoila.cf.broker.repository.PlatformRepository;
 import de.evoila.cf.broker.service.CatalogService;
 import de.evoila.cf.broker.service.availability.ServicePortAvailabilityVerifier;
@@ -29,7 +28,7 @@ public class ElasticsearchBoshPlatformService extends BoshPlatformService {
     ElasticsearchBoshPlatformService(PlatformRepository repository, CatalogService catalogService,
                                      ServicePortAvailabilityVerifier availabilityVerifier,
                                      BoshProperties boshProperties, Optional<DashboardClient> dashboardClient,
-                                     Environment env) throws PlatformException {
+                                     Environment env) {
         super(repository, catalogService, availabilityVerifier, boshProperties, dashboardClient, new ElasticsearchDeploymentManager(boshProperties, env));
     }
 
@@ -47,6 +46,6 @@ public class ElasticsearchBoshPlatformService extends BoshPlatformService {
     }
 
     @Override
-    public void postDeleteInstance(ServiceInstance serviceInstance) throws PlatformException {
+    public void postDeleteInstance(ServiceInstance serviceInstance) {
     }
 }

@@ -1,30 +1,35 @@
-<!doctype html><html><head><base th:href="${baseHref}"/><meta charset="utf-8" name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no"/><title>Dashboard Panel</title><link rel="icon" type="image/x-icon" href="favicon.ico"/><link href="/app/styles.fd8dc4c7ba34ce3679e9.bundle.css" rel="stylesheet"/></head><script th:inline="javascript">/*<![CDATA[*/
+<!doctype html>
+<html>
+
+<head>
+  <base th:href="${baseHref}" />
+  <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <title>Dashboard Panel</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.1/css/all.css" integrity="sha384-5sAR7xN1Nv6T6+dT2mhtzEpVJvfS3NScPQTrOxhwjIuvcA67KV2R5Jz6kr4abQsz"
+    crossorigin="anonymous">
+</head>
+<script th:inline="javascript">
+  /*<![CDATA[*/
   window["INJECTED_ENVIRONMENT"] = {
-    serviceInstanceId: [[${serviceInstanceId}]],
-    token: [[${token}]],
-	  production: false,
+    serviceInstanceId: [[${ serviceInstanceId }]],
+    token: [[${ token }]],
+    production: false,
     baseUrls: {
-      serviceBrokerUrl: [[${endpointUrl}]],
+      serviceBrokerUrl: [[${ endpointUrl }]],
     },
-    customEndpoints: [[${customEndpoints}]],
+    customEndpoints: [[${ customEndpoints }]],
     ui: {
       title: "Service Broker Panel",
       logoSrc: "./assets/core/sb-white.svg"
     }
   };
-  
-/*]]>*/</script><body><sb-root></sb-root><script type="text/javascript" src="/app/inline.0958a2e5475f4494a497.bundle.js"></script><script type="text/javascript" src="/app/polyfills.633bf7515b0e539857c0.bundle.js"></script><script type="text/javascript" src="/app/main.afe5dcd9b58ad22ac6f3.bundle.js"></script></body></html><!--
-  window["INJECTED_ENVIRONMENT"] = {
-    serviceInstanceId: 'DD69H8D3-7876-4056-A0EE-DE8D3498259T',
-    token: 'Bearer 12345678910',
-	  production: false,
-    baseUrls: {
-      serviceBrokerUrl: 'http://localhost:8080', 
-    },
-    ui: {
-      title: "Service Broker Panel",
-      logoSrc: "./assets/core/sb-white.svg"
-    }
-  };
-  
--->
+
+/*]]>*/
+</script>
+
+<body>
+  <sb-root>
+  </sb-root>
+<script type="text/javascript" src="/app/runtime.js"></script><script type="text/javascript" src="/app/polyfills.js"></script><script type="text/javascript" src="/app/styles.js"></script><script type="text/javascript" src="/app/vendor.js"></script><script type="text/javascript" src="/app/main.js"></script></body>
+</html>
