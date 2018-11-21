@@ -30,6 +30,7 @@ public class PcfElasticsearchDeploymentManager extends BaseElasticsearchDeployme
         catalog.getServices().forEach(s -> s.getPlans().forEach(this::parsePlugins));
         catalog.getServices().forEach(s -> s.getPlans().forEach(this::determineAndSetEgressInstanceGroup));
         catalog.getServices().forEach(s -> s.getPlans().forEach(this::determineAndSetIngressInstanceGroup));
+        catalog.getServices().forEach(s -> s.getPlans().forEach(this::setDatabaseProvidersAndConsumers));
     }
 
 
@@ -120,6 +121,8 @@ public class PcfElasticsearchDeploymentManager extends BaseElasticsearchDeployme
                 updatePersistentDiskType(key, value, plan);
                 updateVmType(key, value, plan);
             });
+
+            updateNodeCount("general_nodes", 0, plan);
         }
 
     }
@@ -247,5 +250,36 @@ public class PcfElasticsearchDeploymentManager extends BaseElasticsearchDeployme
 
         plan.getMetadata().setIngressInstanceGroup("data_nodes");
 
+    }
+
+    private void setDatabaseProvidersAndConsumers(Plan plan) {
+        final CustomInstanceGroupConfig generalNodes = plan.getMetadata().getInstanceGroupConfig()
+                .stream()
+                .filter(c -> c.getName().equals("general_nodes"))
+                .findFirst()
+                .orElse(null);
+
+        if (generalNodes != null && generalNodes.getNodes() == 0) {
+            final CustomInstanceGroupConfig masterEligibleNodes = plan.getMetadata().getInstanceGroupConfig()
+                    .stream()
+                    .filter(c -> c.getName().equals("master_eligible_nodes"))
+                    .findFirst()
+                    .orElse(null);
+
+            setProvidesForInstanceGroup(generalNodes, "general_nodes");
+            setProvidesForInstanceGroup(masterEligibleNodes, "discovery_nodes");
+        }
+    }
+
+    private void setProvidesForInstanceGroup(CustomInstanceGroupConfig instanceGroupConfig, String as) {
+        if (instanceGroupConfig != null && as != null) {
+            final LinkedHashMap<String, Object> asGeneralNodes = new LinkedHashMap<>();
+            asGeneralNodes.put("as", as);
+
+            final LinkedHashMap<String, Object> database = new LinkedHashMap<>();
+            database.put("database", asGeneralNodes);
+
+            instanceGroupConfig.setProvides(database);
+        }
     }
 }
