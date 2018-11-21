@@ -41,7 +41,7 @@ public abstract class BaseElasticsearchDeploymentManager extends DeploymentManag
     public final static String DATA_NODES = "data_nodes";
     public final static String INGEST_NODES = "ingest_nodes";
     public final static String MACHINE_LEARNING_NODES = "machine_learning_nodes";
-    public final static String GENERAL_NODES = "master_eligible_nodes";
+    public final static String GENERAL_NODES = "general_nodes";
 
     BaseElasticsearchDeploymentManager(BoshProperties boshProperties, Environment env) {
         super(boshProperties, env);
