@@ -2,34 +2,34 @@
 <html>
 
 <head>
-  <meta charset="utf-8"></meta>
+  <base th:href="${baseHref}" />
+  <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
   <title>Dashboard Panel</title>
-  <base href="/" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"></meta>
-  <link rel="icon" type="image/x-icon" href="favicon.ico"></link>
-  <link href="styles.9bbe57e349f2d4391dc5.bundle.css" rel="stylesheet"></link>
-<link href="styles.29e63bd1a0d06183f9f2.bundle.css" rel="stylesheet"/></head>
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.1/css/all.css" integrity="sha384-5sAR7xN1Nv6T6+dT2mhtzEpVJvfS3NScPQTrOxhwjIuvcA67KV2R5Jz6kr4abQsz"
+    crossorigin="anonymous">
+</head>
 <script th:inline="javascript">
-/*<![CDATA[*/
+  /*<![CDATA[*/
   window["INJECTED_ENVIRONMENT"] = {
-    serviceInstanceId: /*[[${serviceInstanceId}]]*/,
-    token:  /*[[${token}]]*/,
-	  production: false,
+    serviceInstanceId: [[${ serviceInstanceId }]],
+    token: [[${ token }]],
+    production: false,
     baseUrls: {
-    serviceBrokerUrl: /*[[${endpointUrl}]]*/,
+      serviceBrokerUrl: [[${ endpointUrl }]],
     },
+    customEndpoints: [[${ customEndpoints }]],
     ui: {
       title: "Service Broker Panel",
       logoSrc: "./assets/core/sb-white.svg"
     }
   };
+
 /*]]>*/
 </script>
+
 <body>
-  <div id="preloader">
-    <div class="loader loader-white"></div>
-  </div>
   <sb-root>
   </sb-root>
-<script type="text/javascript" src="inline.a116b7bbb9ede9e7183b.bundle.js"></script><script type="text/javascript" src="polyfills.f7ba1df6135456b53f63.bundle.js"></script><script type="text/javascript" src="vendor.a1aad5177839089b46e0.bundle.js"></script><script type="text/javascript" src="main.dbda5ad838406a559757.bundle.js"></script></body>
+<script type="text/javascript" src="/app/runtime.js"></script><script type="text/javascript" src="/app/polyfills.js"></script><script type="text/javascript" src="/app/styles.js"></script><script type="text/javascript" src="/app/vendor.js"></script><script type="text/javascript" src="/app/main.js"></script></body>
 </html>

@@ -6,10 +6,10 @@ package de.evoila.cf.broker.service.custom;
 import de.evoila.cf.broker.exception.ServiceBrokerException;
 import de.evoila.cf.broker.exception.ServiceInstanceBindingException;
 import de.evoila.cf.broker.model.*;
-import de.evoila.cf.broker.repository.BindingRepository;
-import de.evoila.cf.broker.repository.RouteBindingRepository;
-import de.evoila.cf.broker.repository.ServiceDefinitionRepository;
-import de.evoila.cf.broker.repository.ServiceInstanceRepository;
+import de.evoila.cf.broker.model.catalog.ServerAddress;
+import de.evoila.cf.broker.model.catalog.plan.Plan;
+import de.evoila.cf.broker.repository.*;
+import de.evoila.cf.broker.service.AsyncBindingService;
 import de.evoila.cf.broker.service.HAProxyService;
 import de.evoila.cf.broker.service.impl.BindingServiceImpl;
 import de.evoila.cf.broker.util.ServiceInstanceUtils;
@@ -50,11 +50,12 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
     private static final String PROPERTIES_PLUGINS = "elasticsearch.plugins";
     private static final String PROPERTIES_HTTPS_ENABLED = "elasticsearch.xpack.security.http.ssl.enabled";
 
-    public ElasticsearchBindingService(BindingRepository bindingRepository, ServiceDefinitionRepository serviceDefinitionRepository,
-                                       ServiceInstanceRepository serviceInstanceRepository, RouteBindingRepository routeBindingRepository,
-                                       HAProxyService haProxyService) {
-        super(bindingRepository, serviceDefinitionRepository, serviceInstanceRepository, routeBindingRepository,
-                haProxyService);
+    ElasticsearchBindingService(BindingRepository bindingRepository, ServiceDefinitionRepository serviceDefinitionRepository,
+                                ServiceInstanceRepository serviceInstanceRepository, RouteBindingRepository routeBindingRepository,
+                                HAProxyService haProxyService, JobRepository jobRepository, AsyncBindingService asyncBindingService,
+                                PlatformRepository platformRepository) {
+        super(bindingRepository, serviceDefinitionRepository, serviceInstanceRepository,
+                routeBindingRepository, haProxyService, jobRepository, asyncBindingService, platformRepository);
     }
 
     private static ClientMode getClientModeOrDefault(final Map<String, Object> map) {
@@ -91,11 +92,6 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         String message = MessageFormat.format("'{' serviceDefinitionId: {0}, planId: {1}, appGuid: {2}, bindResource: {3} '}'", r.getServiceDefinitionId(), r.getPlanId(), r.getAppGuid(), bindResourceMessage);
 
         return message;
-    }
-
-    @Override
-    public ServiceInstanceBinding getServiceInstanceBinding(String id) {
-        throw new UnsupportedOperationException();
     }
 
     @Override
