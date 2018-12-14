@@ -25,10 +25,7 @@ import org.springframework.web.client.RestTemplate;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static de.evoila.cf.broker.service.custom.ElasticsearchBindingService.ClientMode.CLIENT_MODE_IDENTIFIER;
@@ -43,6 +40,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
     public static final String HTTP = "http";
     public static final String HTTPS = "https";
     public static final String X_PACK_USERS_URI_PATTERN = "%s/_xpack/security/user";
+    public static final String HEALTH_ENDPOINT_URI_PATTERN = "%s/_cluster/health";
     public static final String SUPER_ADMIN = "elastic";
     private static final String MANAGER_ROLE = "manager";
     private static final Logger log = LoggerFactory.getLogger(ElasticsearchBindingService.class);
@@ -106,17 +104,20 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
 
         final Map<String, Object> credentials = new HashMap<>();
 
-        String endpoint;
+
+        List<ServerAddress> filteredHosts;
         if (host != null) {
             // If explicit server address should be used for connection string (host != null), use this for endpoint.
-            endpoint = host.getIp() + ":" + host.getPort();
+            String endpoint = host.getIp() + ":" + host.getPort();
+            filteredHosts = new ArrayList<>();
+            filteredHosts.add(host);
 
             credentials.put("host", endpoint);
             credentials.put(CLIENT_MODE_IDENTIFIER, clientMode.identifier);
         } else {
-            endpoint = ServiceInstanceUtils.connectionUrl(ServiceInstanceUtils.filteredServerAddress(hosts, serverAddressFilter));
+            filteredHosts = ServiceInstanceUtils.filteredServerAddress(hosts, serverAddressFilter);
 
-            final List<String> hostsAsString = hosts.stream()
+            final List<String> hostsAsString = filteredHosts.stream()
                     .map(h -> h.getIp() + ":" + h.getPort())
                     .collect(Collectors.toList());
             credentials.put("hosts", hostsAsString);
@@ -146,15 +147,15 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
             final String password = generatePassword();
 
             boolean success = false;
-            for (ServerAddress nodeAdress : hosts) {
+            for (ServerAddress nodeAdress : filteredHosts) {
                 final String userCreationUri = generateUsersUri(nodeAdress.getIp() + ":" + nodeAdress.getPort(), protocolMode);
+                final String endpoint = String.format("%s:%s", nodeAdress.getIp(), nodeAdress.getPort());
 
                 try {
                     addUserToElasticsearch(bindingId, userCreationUri, password, restTemplate);
                     credentials.put("username", username);
                     credentials.put("password", password);
                     userCredentials = String.format("%s:%s@", username, password);
-                    endpoint = String.format("%s:%s", nodeAdress.getIp(), nodeAdress.getPort());
                     success = true;
                 } catch (ServiceBrokerException e) {
                     log.info(MessageFormat.format("Binding failed on host {0}:{1}.", nodeAdress.getIp(), nodeAdress.getPort()));
@@ -175,6 +176,25 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
             }
         } else {
             protocolMode = HTTP;
+
+            String endpoint = "";
+            RestTemplate restTemplate = new RestTemplate();
+
+            for(ServerAddress adress : filteredHosts) {
+                String hostAsString = adress.getIp() + ":" + adress.getPort();
+                ResponseEntity<String> response = restTemplate.getForEntity(generateHealthEndpointUri(hostAsString, protocolMode), String.class);
+
+                if (response.getStatusCode().equals(HttpStatus.OK)) {
+                    endpoint = hostAsString;
+                    break;
+                }
+            }
+
+            if (endpoint.equals("")) {
+                log.error("Binding failed. No available hosts.");
+                throw new ServiceBrokerException("Binding failed. No available hosts.");
+            }
+
             final String dbURL = String.format("%s://%s%s", protocolMode, userCredentials, endpoint);
             credentials.put(URI, dbURL);
         }
@@ -268,6 +288,11 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
     private String generateUsersUri(String endpoint, String protocolMode) {
         final String adminUri = String.format("%s://%s", protocolMode, endpoint);
         return String.format(X_PACK_USERS_URI_PATTERN, adminUri);
+    }
+
+    private String generateHealthEndpointUri(String endpoint, String protocolMode) {
+        final String clusterUri = String.format("%s://%s", protocolMode, endpoint);
+        return String.format(HEALTH_ENDPOINT_URI_PATTERN, clusterUri);
     }
 
     private String clientModeToServerAddressFilter(ClientMode m, Plan p) {
