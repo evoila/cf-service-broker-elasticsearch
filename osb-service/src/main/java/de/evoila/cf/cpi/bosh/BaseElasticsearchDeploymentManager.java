@@ -48,7 +48,8 @@ public abstract class BaseElasticsearchDeploymentManager extends DeploymentManag
     }
 
     @Override
-    protected void replaceParameters(ServiceInstance serviceInstance, Manifest manifest, Plan plan, Map<String, Object> customParameters) {
+    protected void replaceParameters(ServiceInstance serviceInstance, Manifest manifest, Plan plan, Map<String, Object> customParameters,
+                                     boolean isUpdate) {
         HashMap<String, Object> properties = new HashMap<>();
         properties.putAll(plan.getMetadata().getCustomParameters());
 
