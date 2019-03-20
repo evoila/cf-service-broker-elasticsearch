@@ -56,6 +56,14 @@ instance_groups:
     release: osb-bosh-monitoring
   - name: elasticsearch_exporter
     release: osb-bosh-monitoring
+  - name: backup-agent
+    release: osb-bosh-elasticsearch
+    consumes:
+      database:
+        from: discovery_nodes
+    properties:
+      backup_agent:
+        skip_storage: true
   properties:
     elasticsearch:
       cluster_name: elasticsearch-cluster
@@ -97,6 +105,11 @@ instance_groups:
     release: osb-bosh-monitoring
   - name: elasticsearch_exporter
     release: osb-bosh-monitoring
+  - name: backup-agent
+    release: osb-bosh-elasticsearch
+    consumes:
+      database:
+        from: discovery_nodes
   properties:
     elasticsearch:
       cluster_name: elasticsearch-cluster
@@ -136,6 +149,11 @@ instance_groups:
     release: osb-bosh-monitoring
   - name: elasticsearch_exporter
     release: osb-bosh-monitoring
+  - name: backup-agent
+    release: osb-bosh-elasticsearch
+    consumes:
+      database:
+        from: discovery_nodes
   properties:
     elasticsearch:
       cluster_name: elasticsearch-cluster
@@ -177,6 +195,11 @@ instance_groups:
     release: osb-bosh-monitoring
   - name: elasticsearch_exporter
     release: osb-bosh-monitoring
+  - name: backup-agent
+    release: osb-bosh-elasticsearch
+    consumes:
+      database:
+        from: discovery_nodes
   properties:
     elasticsearch:
       cluster_name: elasticsearch-cluster
@@ -218,6 +241,11 @@ instance_groups:
     release: osb-bosh-monitoring
   - name: elasticsearch_exporter
     release: osb-bosh-monitoring
+  - name: backup-agent
+    release: osb-bosh-elasticsearch
+    consumes:
+      database:
+        from: discovery_nodes
   properties:
     elasticsearch:
       cluster_name: elasticsearch-cluster
