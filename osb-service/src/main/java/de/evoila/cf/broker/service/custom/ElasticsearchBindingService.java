@@ -21,6 +21,7 @@ import org.springframework.http.client.support.BasicAuthorizationInterceptor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
@@ -50,7 +51,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
 
     ElasticsearchBindingService(BindingRepository bindingRepository, ServiceDefinitionRepository serviceDefinitionRepository,
                                 ServiceInstanceRepository serviceInstanceRepository, RouteBindingRepository routeBindingRepository,
-                                HAProxyService haProxyService, JobRepository jobRepository, AsyncBindingService asyncBindingService,
+                                @Autowired(required = false) HAProxyService haProxyService, JobRepository jobRepository, AsyncBindingService asyncBindingService,
                                 PlatformRepository platformRepository) {
         super(bindingRepository, serviceDefinitionRepository, serviceInstanceRepository,
                 routeBindingRepository, haProxyService, jobRepository, asyncBindingService, platformRepository);
