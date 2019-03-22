@@ -34,13 +34,3 @@ logging:
   level:
     root: ${LOG_LEVEL_ROOT:INFO}
 
----
-spring:
-  profiles: pcf
-  rabbitmq:
-    host: "${RABBITMQ_HOST}"
-  data:
-    mongodb:
-      host: "${MONGODB_HOST}"
-haproxy:
-  uri: "https://${HAPROXY-AGENT_HOST}/agents/${HAPROXY-AGENT_ID}/schemas?type=listen"
