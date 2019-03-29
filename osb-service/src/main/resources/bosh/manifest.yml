@@ -110,6 +110,9 @@ instance_groups:
     consumes:
       database:
         from: discovery_nodes
+    properties:
+      backup_agent:
+        skip_storage: true
   properties:
     elasticsearch:
       cluster_name: elasticsearch-cluster
@@ -154,6 +157,9 @@ instance_groups:
     consumes:
       database:
         from: discovery_nodes
+    properties:
+      backup_agent:
+        skip_storage: true
   properties:
     elasticsearch:
       cluster_name: elasticsearch-cluster
@@ -200,6 +206,9 @@ instance_groups:
     consumes:
       database:
         from: discovery_nodes
+    properties:
+      backup_agent:
+        skip_storage: true
   properties:
     elasticsearch:
       cluster_name: elasticsearch-cluster
@@ -246,6 +255,9 @@ instance_groups:
     consumes:
       database:
         from: discovery_nodes
+    properties:
+      backup_agent:
+        skip_storage: true
   properties:
     elasticsearch:
       cluster_name: elasticsearch-cluster
