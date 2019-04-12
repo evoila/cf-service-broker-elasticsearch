@@ -214,7 +214,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
             return false;
         }
 
-        return XPackProperyRaw instanceof  Boolean && ((Boolean) XPackProperyRaw);
+        return XPackProperyRaw instanceof Boolean && ((Boolean) XPackProperyRaw);
     }
 
     private boolean isHttpsEnabled(Plan plan) {
