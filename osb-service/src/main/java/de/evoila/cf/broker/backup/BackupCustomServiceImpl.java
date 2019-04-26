@@ -50,7 +50,7 @@ public class BackupCustomServiceImpl implements BackupCustomService {
     public Map<String, String> getItems(String serviceInstanceId) throws ServiceInstanceDoesNotExistException {
         final ServiceInstance serviceInstance = this.validateServiceInstanceId(serviceInstanceId);
         final HashMap<String, String> map = new HashMap<>();
-        map.put("Elasticsearch Cluster", "Elasticsearch Cluster");
+        map.put("elasticsearch_cluster", "elasticsearch_cluster");
         return map;
     }
 
