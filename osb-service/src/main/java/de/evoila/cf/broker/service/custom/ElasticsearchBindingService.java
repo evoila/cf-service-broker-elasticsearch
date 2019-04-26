@@ -48,6 +48,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
     private static final String URI = "uri";
     private static final String PROPERTIES_PLUGINS = "elasticsearch.plugins";
     private static final String PROPERTIES_HTTPS_ENABLED = "elasticsearch.xpack.security.http.ssl.enabled";
+    private static final String PROPERTIES_X_PACK_ENABLED = "elasticsearch.xpack.security.enabled";
 
     ElasticsearchBindingService(BindingRepository bindingRepository, ServiceDefinitionRepository serviceDefinitionRepository,
                                 ServiceInstanceRepository serviceInstanceRepository, RouteBindingRepository routeBindingRepository,
@@ -128,7 +129,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         final String protocolMode;
         String userCredentials = "";
 
-        if (pluginsContainXPack(plan)) {
+        if (planContainsXPack(plan)) {
 
             if (isHttpsEnabled(plan)) {
                 protocolMode = HTTPS;
@@ -204,16 +205,16 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         return credentials;
     }
 
-    private boolean pluginsContainXPack(Plan plan) {
-        Object pluginsRaw;
+    private boolean planContainsXPack(Plan plan) {
+        Object XPackProperyRaw;
         try {
-            pluginsRaw = extractProperty(plan.getMetadata().getProperties(), PROPERTIES_PLUGINS);
+            XPackProperyRaw = extractProperty(plan.getMetadata().getProperties(), PROPERTIES_X_PACK_ENABLED);
         } catch (IllegalArgumentException e) {
-            log.error("Property " + PROPERTIES_PLUGINS + " is missing for plan " + plan.getName(), e);
+            log.error("Property " + PROPERTIES_X_PACK_ENABLED + " is missing for plan " + plan.getName(), e);
             return false;
         }
 
-        return pluginsRaw instanceof  Map && ((Map) pluginsRaw).containsKey("x-pack");
+        return XPackProperyRaw instanceof Boolean && ((Boolean) XPackProperyRaw);
     }
 
     private boolean isHttpsEnabled(Plan plan) {
@@ -321,7 +322,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
 
         log.info(MessageFormat.format("Deleting binding ''{0}''.", bindingId));
 
-        if (pluginsContainXPack(plan)) {
+        if (planContainsXPack(plan)) {
             if (isHttpsEnabled(plan)) {
                 protocolMode = HTTPS;
             } else {
