@@ -4,29 +4,27 @@ import com.esotericsoftware.minlog.Log;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.evoila.cf.broker.bean.BackupConfiguration;
-import de.evoila.cf.broker.exception.ServiceBrokerException;
-import de.evoila.cf.broker.exception.ServiceDefinitionDoesNotExistException;
 import de.evoila.cf.broker.exception.ServiceInstanceDoesNotExistException;
 import de.evoila.cf.broker.model.ServiceInstance;
 import de.evoila.cf.broker.model.User;
 import de.evoila.cf.broker.model.catalog.ServerAddress;
 import de.evoila.cf.broker.model.catalog.plan.Plan;
-import de.evoila.cf.broker.repository.ServiceDefinitionRepository;
 import de.evoila.cf.broker.repository.ServiceInstanceRepository;
 import de.evoila.cf.broker.service.BackupCustomService;
-import de.evoila.cf.broker.service.custom.ElasticsearchBindingService;
 import de.evoila.cf.broker.service.custom.model.Index;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.support.BasicAuthorizationInterceptor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Michael Hahn
@@ -42,53 +40,18 @@ public class BackupCustomServiceImpl implements BackupCustomService {
     private static final String PROPERTIES_X_PACK_ENABLED = "elasticsearch.xpack.security.enabled";
     private static final Logger log = LoggerFactory.getLogger(BackupCustomServiceImpl.class);
 
-    private BackupConfiguration backupTypeConfiguration;
-
     private ServiceInstanceRepository serviceInstanceRepository;
 
-    private ServiceDefinitionRepository serviceDefinitionRepository;
-
-    public BackupCustomServiceImpl(BackupConfiguration backupTypeConfiguration,
-                                   ServiceInstanceRepository serviceInstanceRepository,
-                                   ServiceDefinitionRepository serviceDefinitionRepository) {
-        this.backupTypeConfiguration = backupTypeConfiguration;
+    public BackupCustomServiceImpl(ServiceInstanceRepository serviceInstanceRepository) {
         this.serviceInstanceRepository = serviceInstanceRepository;
-        this.serviceDefinitionRepository = serviceDefinitionRepository;
     }
 
     @Override
-    public Map<String, String> getItems(String serviceInstanceId) throws ServiceInstanceDoesNotExistException, ServiceDefinitionDoesNotExistException, ServiceBrokerException {
-
+    public Map<String, String> getItems(String serviceInstanceId) throws ServiceInstanceDoesNotExistException {
         final ServiceInstance serviceInstance = this.validateServiceInstanceId(serviceInstanceId);
-
-        final Plan plan = serviceDefinitionRepository.getPlan(serviceInstance.getPlanId());
-
-        final List<ServerAddress> hosts = serviceInstance.getHosts();
-
-
-        final String protocolMode;
-        final RestTemplate restTemplate = new RestTemplate();
-
-        if(planContainsXPack(plan)) {
-            if (isHttpsEnabled(plan)) {
-                protocolMode = HTTPS;
-            } else {
-                protocolMode = HTTP;
-            }
-
-            final String username = ElasticsearchBindingService.SUPER_ADMIN;
-            final String password = extractUserPassword(serviceInstance, username);
-            final BasicAuthorizationInterceptor basicAuthorizationInterceptor = new BasicAuthorizationInterceptor(username, password);
-
-
-            restTemplate.getInterceptors().add(basicAuthorizationInterceptor);
-
-            return getIndexMap(hosts, protocolMode, restTemplate);
-        } else {
-            protocolMode = HTTP;
-
-            return getIndexMap(hosts, protocolMode, restTemplate);
-        }
+        final HashMap<String, String> map = new HashMap<>();
+        map.put("Elasticsearch Cluster", "Elasticsearch Cluster");
+        return map;
     }
 
     private HashMap<String, String> getIndexMap(List<ServerAddress> hosts, String protocolMode, RestTemplate restTemplate) {
