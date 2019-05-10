@@ -214,6 +214,10 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
             return false;
         }
 
+        if (XPackProperyRaw instanceof String) {
+            return Boolean.parseBoolean((String) XPackProperyRaw);
+        }
+
         return XPackProperyRaw instanceof Boolean && ((Boolean) XPackProperyRaw);
     }
 
@@ -224,6 +228,10 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         } catch (IllegalArgumentException e) {
             log.error("Property " + PROPERTIES_HTTPS_ENABLED + " is missing for plan " + plan.getName(), e);
             return false;
+        }
+
+        if (pluginsRaw instanceof String) {
+            return Boolean.parseBoolean((String) pluginsRaw);
         }
 
         return pluginsRaw instanceof Boolean && (Boolean) pluginsRaw;
