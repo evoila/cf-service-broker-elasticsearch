@@ -4,19 +4,23 @@ import com.esotericsoftware.minlog.Log;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.evoila.cf.broker.bean.BackupConfiguration;
+import de.evoila.cf.broker.exception.ServiceDefinitionDoesNotExistException;
 import de.evoila.cf.broker.exception.ServiceInstanceDoesNotExistException;
 import de.evoila.cf.broker.model.ServiceInstance;
 import de.evoila.cf.broker.model.User;
 import de.evoila.cf.broker.model.catalog.ServerAddress;
 import de.evoila.cf.broker.model.catalog.plan.Plan;
+import de.evoila.cf.broker.repository.ServiceDefinitionRepository;
 import de.evoila.cf.broker.repository.ServiceInstanceRepository;
 import de.evoila.cf.broker.service.BackupCustomService;
+import de.evoila.cf.broker.service.custom.ElasticsearchBindingService;
 import de.evoila.cf.broker.service.custom.model.Index;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.support.BasicAuthorizationInterceptor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -41,17 +45,45 @@ public class BackupCustomServiceImpl implements BackupCustomService {
     private static final Logger log = LoggerFactory.getLogger(BackupCustomServiceImpl.class);
 
     private ServiceInstanceRepository serviceInstanceRepository;
+    private ServiceDefinitionRepository serviceDefinitionRepository;
 
-    public BackupCustomServiceImpl(ServiceInstanceRepository serviceInstanceRepository) {
+    public BackupCustomServiceImpl(ServiceInstanceRepository serviceInstanceRepository, ServiceDefinitionRepository serviceDefinitionRepository) {
         this.serviceInstanceRepository = serviceInstanceRepository;
+        this.serviceDefinitionRepository = serviceDefinitionRepository;
     }
 
     @Override
-    public Map<String, String> getItems(String serviceInstanceId) throws ServiceInstanceDoesNotExistException {
+    public Map<String, String> getItems(String serviceInstanceId) throws ServiceInstanceDoesNotExistException, ServiceDefinitionDoesNotExistException {
         final ServiceInstance serviceInstance = this.validateServiceInstanceId(serviceInstanceId);
         final HashMap<String, String> map = new HashMap<>();
-        map.put("elasticsearch_cluster", "elasticsearch_cluster");
-        return map;
+        final Plan plan = serviceDefinitionRepository.getPlan(serviceInstance.getPlanId());
+
+        final List<ServerAddress> hosts = serviceInstance.getHosts();
+
+
+        final String protocolMode;
+        final RestTemplate restTemplate = new RestTemplate();
+
+        if(planContainsXPack(plan)) {
+            if (isHttpsEnabled(plan)) {
+                protocolMode = HTTPS;
+            } else {
+                protocolMode = HTTP;
+            }
+
+            final String username = ElasticsearchBindingService.SUPER_ADMIN;
+            final String password = extractUserPassword(serviceInstance, username);
+            final BasicAuthorizationInterceptor basicAuthorizationInterceptor = new BasicAuthorizationInterceptor(username, password);
+
+
+            restTemplate.getInterceptors().add(basicAuthorizationInterceptor);
+
+            return getIndexMap(hosts, protocolMode, restTemplate);
+        } else {
+            protocolMode = HTTP;
+
+            return getIndexMap(hosts, protocolMode, restTemplate);
+        }
     }
 
     private HashMap<String, String> getIndexMap(List<ServerAddress> hosts, String protocolMode, RestTemplate restTemplate) {
