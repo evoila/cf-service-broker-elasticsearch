@@ -160,7 +160,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                     userCredentials = String.format("%s:%s@", username, password);
                     success = true;
                 } catch (ServiceBrokerException e) {
-                    log.info(MessageFormat.format("Binding failed on host {0}:{1}.", nodeAdress.getIp(), nodeAdress.getPort()));
+                    log.info(MessageFormat.format("Binding failed on host {0}:{1}. {2}", nodeAddress.getIp(), nodeAddress.getPort(), e.getMessage()));
                 }
 
                 if (success) {
@@ -278,7 +278,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                         new ServiceInstanceBindingException(bindingId, statusCode, "Cannot create user for binding."));
             }
         } catch (RestClientException e) {
-            throw new ServiceBrokerException("Cannot create user for binding.");
+            throw new ServiceBrokerException("Cannot create user for binding. " + e.getMessage());
         }
     }
 
@@ -377,7 +377,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                 throw new ServiceBrokerException(MessageFormat.format("Can not delete binding ''{0}''. Problem with host!", bindingId));
             }
         } else {
-            log.info(MessageFormat.format("Can not delete binding ''{0}''. x-pack not enabled!", bindingId));
+            log.info(MessageFormat.format("Binding ''{0}'' deleted.", bindingId));
         }
     }
 
