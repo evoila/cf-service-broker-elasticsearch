@@ -13,17 +13,28 @@ import de.evoila.cf.broker.service.AsyncBindingService;
 import de.evoila.cf.broker.service.HAProxyService;
 import de.evoila.cf.broker.service.impl.BindingServiceImpl;
 import de.evoila.cf.broker.util.ServiceInstanceUtils;
+import org.apache.http.client.HttpClient;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContexts;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.client.support.BasicAuthorizationInterceptor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.net.ssl.SSLContext;
 import java.math.BigInteger;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.text.MessageFormat;
 import java.util.*;
@@ -46,9 +57,6 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
     private static final String MANAGER_ROLE = "manager";
     private static final Logger log = LoggerFactory.getLogger(ElasticsearchBindingService.class);
     private static final String URI = "uri";
-    private static final String PROPERTIES_PLUGINS = "elasticsearch.plugins";
-    private static final String PROPERTIES_HTTPS_ENABLED = "elasticsearch.xpack.security.http.ssl.enabled";
-    private static final String PROPERTIES_X_PACK_ENABLED = "elasticsearch.xpack.security.enabled";
 
     ElasticsearchBindingService(BindingRepository bindingRepository, ServiceDefinitionRepository serviceDefinitionRepository,
                                 ServiceInstanceRepository serviceInstanceRepository, RouteBindingRepository routeBindingRepository,
@@ -129,38 +137,37 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         final String protocolMode;
         String userCredentials = "";
 
-        if (planContainsXPack(plan)) {
+        if (ElasticsearchUtilities.planContainsXPack(plan)) {
+            final String username = bindingId;
+            final String password = generatePassword();
+            final RestTemplate restTemplate;
 
-            if (isHttpsEnabled(plan)) {
+            if (ElasticsearchUtilities.isHttpsEnabled(plan)) {
                 protocolMode = HTTPS;
+                restTemplate = getRestTemplateWithSSL();
             } else {
                 protocolMode = HTTP;
+                restTemplate = new RestTemplate();
             }
 
-            final String username = bindingId;
-
-            final String adminUserName = SUPER_ADMIN;
-            final String adminPassword = extractUserPassword(serviceInstance, adminUserName);
-            final BasicAuthorizationInterceptor basicAuthorizationInterceptor = new BasicAuthorizationInterceptor(adminUserName, adminPassword);
-
-            final RestTemplate restTemplate = new RestTemplate();
+            // Prepare REST Template
+            final BasicAuthorizationInterceptor basicAuthorizationInterceptor = getInterceptorWithCredentials(SUPER_ADMIN, serviceInstance);
             restTemplate.getInterceptors().add(basicAuthorizationInterceptor);
 
-            final String password = generatePassword();
-
             boolean success = false;
-            for (ServerAddress nodeAdress : filteredHosts) {
-                final String userCreationUri = generateUsersUri(nodeAdress.getIp() + ":" + nodeAdress.getPort(), protocolMode);
-                final String endpoint = String.format("%s:%s", nodeAdress.getIp(), nodeAdress.getPort());
+            for (ServerAddress nodeAddress : filteredHosts) {
+                final String userCreationUri = generateUsersUri(nodeAddress.getIp() + ":" + nodeAddress.getPort(), protocolMode);
+                final String endpoint = String.format("%s:%s", nodeAddress.getIp(), nodeAddress.getPort());
 
                 try {
-                    addUserToElasticsearch(bindingId, userCreationUri, password, restTemplate);
+                    log.info(MessageFormat.format("Try binding on host {0}:{1} with URI \"{2}\" ", nodeAddress.getIp(), nodeAddress.getPort(), userCreationUri));
+                    addUserToElasticsearch(username, userCreationUri, password, restTemplate);
                     credentials.put("username", username);
                     credentials.put("password", password);
                     userCredentials = String.format("%s:%s@", username, password);
                     success = true;
                 } catch (ServiceBrokerException e) {
-                    log.info(MessageFormat.format("Binding failed on host {0}:{1}.", nodeAdress.getIp(), nodeAdress.getPort()));
+                    log.info(MessageFormat.format("Binding failed on host {0}:{1}. {2}", nodeAddress.getIp(), nodeAddress.getPort(), e.getMessage()));
                 }
 
                 if (success) {
@@ -180,10 +187,10 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
             protocolMode = HTTP;
 
             String endpoint = "";
-            RestTemplate restTemplate = new RestTemplate();
+            final RestTemplate restTemplate = new RestTemplate();
 
-            for(ServerAddress adress : filteredHosts) {
-                String hostAsString = adress.getIp() + ":" + adress.getPort();
+            for(ServerAddress address : filteredHosts) {
+                String hostAsString = address.getIp() + ":" + address.getPort();
                 ResponseEntity<String> response = restTemplate.getForEntity(generateHealthEndpointUri(hostAsString, protocolMode), String.class);
 
                 if (response.getStatusCode().equals(HttpStatus.OK)) {
@@ -205,64 +212,47 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         return credentials;
     }
 
-    private boolean planContainsXPack(Plan plan) {
-        Object XPackProperyRaw;
+    /**
+     * Returns a BasicAuthorizationInterceptor with username and password. The password
+     * gets extracted automatically.
+     *
+     * @param username the username, must not be null
+     * @param serviceInstance the service instance, must not be null
+     * @return a BasicAuthorizationInterceptor with username and password
+     */
+    private BasicAuthorizationInterceptor getInterceptorWithCredentials(String username, ServiceInstance serviceInstance) {
+        if (username == null || username.isEmpty()) {
+            throw new IllegalArgumentException("Username must not be null or empty!");
+        }
+        if (serviceInstance == null) {
+            throw new IllegalArgumentException("ServiceInstance must not be null!");
+        }
+        final String adminPassword = extractUserPassword(serviceInstance, username);
+
+        return new BasicAuthorizationInterceptor(username, adminPassword);
+    }
+
+    /**
+     * Returns a RestTemplate, which is usable for SSL/TLS encrypted requests.
+     *
+     * @return a RestTemplate with SSL/TLS support
+     */
+    private RestTemplate getRestTemplateWithSSL() {
+        final SSLContext sslcontext;
         try {
-            XPackProperyRaw = extractProperty(plan.getMetadata().getProperties(), PROPERTIES_X_PACK_ENABLED);
-        } catch (IllegalArgumentException e) {
-            log.error("Property " + PROPERTIES_X_PACK_ENABLED + " is missing for plan " + plan.getName(), e);
-            return false;
+            sslcontext = SSLContexts.custom().loadTrustMaterial(null,
+                    new TrustSelfSignedStrategy()).build();
+        } catch (NoSuchAlgorithmException | KeyManagementException | KeyStoreException e) {
+            throw new RuntimeException();
         }
 
-        if (XPackProperyRaw instanceof String) {
-            return Boolean.parseBoolean((String) XPackProperyRaw);
-        }
+        SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslcontext,
+                new String[]{"TLSv1"}, null, new NoopHostnameVerifier());
 
-        return XPackProperyRaw instanceof Boolean && ((Boolean) XPackProperyRaw);
-    }
+        final HttpClient httpclient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
+        final HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory(httpclient);
 
-    private boolean isHttpsEnabled(Plan plan) {
-        Object pluginsRaw;
-        try {
-            pluginsRaw = extractProperty(plan.getMetadata().getProperties(), PROPERTIES_HTTPS_ENABLED);
-        } catch (IllegalArgumentException e) {
-            log.error("Property " + PROPERTIES_HTTPS_ENABLED + " is missing for plan " + plan.getName(), e);
-            return false;
-        }
-
-        if (pluginsRaw instanceof String) {
-            return Boolean.parseBoolean((String) pluginsRaw);
-        }
-
-        return pluginsRaw instanceof Boolean && (Boolean) pluginsRaw;
-    }
-
-    private Object extractProperty(Object elasticsearchPropertiesRaw, String key) {
-        final List<String> keyElements = Arrays.asList(key.split("\\."));
-
-        return extractProperty(elasticsearchPropertiesRaw, keyElements);
-    }
-
-    private Object extractProperty(Object elasticsearchPropertiesRaw, List<String> keyElements) {
-        if (elasticsearchPropertiesRaw instanceof Map) {
-            final Map<String, Object> elasticsearchProperties = ((Map<String, Object>) elasticsearchPropertiesRaw);
-
-            final Object pluginPropertiesRaw = elasticsearchProperties.get(keyElements.get(0));
-
-
-            if (keyElements.size() == 1) {
-                return pluginPropertiesRaw;
-            } else {
-
-                if (pluginPropertiesRaw == null) {
-                    throw new IllegalArgumentException("Could not access property. Intermediate map is missing.");
-                }
-
-                final List<String> nextStepSelectors = keyElements.subList(1, keyElements.size());
-                return extractProperty(pluginPropertiesRaw, nextStepSelectors);
-            }
-        }
-        throw new IllegalArgumentException("Wrong parameter format. Argument was not of type Map.");
+        return new RestTemplate(factory);
     }
 
     private void addUserToElasticsearch(String bindingId, String userCreationUri, String password, RestTemplate restTemplate) throws ServiceBrokerException {
@@ -278,7 +268,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                         new ServiceInstanceBindingException(bindingId, statusCode, "Cannot create user for binding."));
             }
         } catch (RestClientException e) {
-            throw new ServiceBrokerException("Cannot create user for binding.");
+            throw new ServiceBrokerException("Cannot create user for binding. " + e.getMessage());
         }
     }
 
@@ -327,21 +317,21 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         final String serverAddressFilter = clientModeToServerAddressFilter(clientMode, plan);
         final String bindingId = binding.getId();
         final String protocolMode;
+        final RestTemplate restTemplate;
 
         log.info(MessageFormat.format("Deleting binding ''{0}''.", bindingId));
 
-        if (planContainsXPack(plan)) {
-            if (isHttpsEnabled(plan)) {
+        if (ElasticsearchUtilities.planContainsXPack(plan)) {
+            if (ElasticsearchUtilities.isHttpsEnabled(plan)) {
                 protocolMode = HTTPS;
+                restTemplate = getRestTemplateWithSSL();
             } else {
                 protocolMode = HTTP;
+                restTemplate = new RestTemplate();
             }
 
-            final String adminUserName = SUPER_ADMIN;
-            final String adminPassword = extractUserPassword(serviceInstance, adminUserName);
-            final BasicAuthorizationInterceptor basicAuthorizationInterceptor = new BasicAuthorizationInterceptor(adminUserName, adminPassword);
-
-            final RestTemplate restTemplate = new RestTemplate();
+            // Prepare REST Template
+            final BasicAuthorizationInterceptor basicAuthorizationInterceptor = getInterceptorWithCredentials(SUPER_ADMIN, serviceInstance);
             restTemplate.getInterceptors().add(basicAuthorizationInterceptor);
 
             boolean success = false;
@@ -360,10 +350,11 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                 final String userCreationUri = generateUsersUri(endpoint, protocolMode);
 
                 try {
-                   deleteUserFromElasticsearch(bindingId, userCreationUri, restTemplate);
-                   success = true;
+                    log.info(MessageFormat.format("Try binding on host {0}:{1} with URI \"{2}\" ", a.getIp(), a.getPort(), userCreationUri));
+                    deleteUserFromElasticsearch(bindingId, userCreationUri, restTemplate);
+                    success = true;
                 } catch (ServiceBrokerException e) {
-                    log.info(MessageFormat.format("Failed deleting binding ''{0}'' on endpoint ''{1}''.", bindingId, endpoint));
+                    log.info(MessageFormat.format("Failed deleting binding ''{0}'' on endpoint ''{1}''. {2}", bindingId, endpoint, e.getMessage()));
                 }
 
                 if (success) {
@@ -377,7 +368,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                 throw new ServiceBrokerException(MessageFormat.format("Can not delete binding ''{0}''. Problem with host!", bindingId));
             }
         } else {
-            log.info(MessageFormat.format("Can not delete binding ''{0}''. x-pack not enabled!", bindingId));
+            log.info(MessageFormat.format("Binding ''{0}'' deleted.", bindingId));
         }
     }
 
