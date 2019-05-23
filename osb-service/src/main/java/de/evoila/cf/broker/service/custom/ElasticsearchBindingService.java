@@ -160,6 +160,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                 final String endpoint = String.format("%s:%s", nodeAddress.getIp(), nodeAddress.getPort());
 
                 try {
+                    log.info(MessageFormat.format("Try binding on host {0}:{1} with URI \"{2}\" ", nodeAddress.getIp(), nodeAddress.getPort(), userCreationUri));
                     addUserToElasticsearch(username, userCreationUri, password, restTemplate);
                     credentials.put("username", username);
                     credentials.put("password", password);
@@ -349,10 +350,11 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                 final String userCreationUri = generateUsersUri(endpoint, protocolMode);
 
                 try {
-                   deleteUserFromElasticsearch(bindingId, userCreationUri, restTemplate);
-                   success = true;
+                    log.info(MessageFormat.format("Try binding on host {0}:{1} with URI \"{2}\" ", a.getIp(), a.getPort(), userCreationUri));
+                    deleteUserFromElasticsearch(bindingId, userCreationUri, restTemplate);
+                    success = true;
                 } catch (ServiceBrokerException e) {
-                    log.info(MessageFormat.format("Failed deleting binding ''{0}'' on endpoint ''{1}''.", bindingId, endpoint));
+                    log.info(MessageFormat.format("Failed deleting binding ''{0}'' on endpoint ''{1}''. {2}", bindingId, endpoint, e.getMessage()));
                 }
 
                 if (success) {
