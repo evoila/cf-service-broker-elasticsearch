@@ -360,6 +360,9 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                 try {
                     log.info(MessageFormat.format("Try binding on host {0}:{1} with URI \"{2}\" ", a.getIp(), a.getPort(), userCreationUri));
                     deleteUserFromElasticsearch(bindingId, userCreationUri, restTemplate);
+
+                    credentialStore.deleteCredentials(serviceInstance, bindingId);  // Delete user from credential store
+
                     success = true;
                 } catch (ServiceBrokerException e) {
                     log.info(MessageFormat.format("Failed deleting binding ''{0}'' on endpoint ''{1}''. {2}", bindingId, endpoint, e.getMessage()));
