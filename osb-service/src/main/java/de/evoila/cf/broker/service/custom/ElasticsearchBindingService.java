@@ -13,6 +13,7 @@ import de.evoila.cf.broker.service.AsyncBindingService;
 import de.evoila.cf.broker.service.HAProxyService;
 import de.evoila.cf.broker.service.impl.BindingServiceImpl;
 import de.evoila.cf.broker.util.ServiceInstanceUtils;
+import de.evoila.cf.security.credentials.CredentialStore;
 import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
@@ -58,12 +59,16 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
     private static final Logger log = LoggerFactory.getLogger(ElasticsearchBindingService.class);
     private static final String URI = "uri";
 
+    private final CredentialStore credentialStore;
+
     ElasticsearchBindingService(BindingRepository bindingRepository, ServiceDefinitionRepository serviceDefinitionRepository,
                                 ServiceInstanceRepository serviceInstanceRepository, RouteBindingRepository routeBindingRepository,
                                 @Autowired(required = false) HAProxyService haProxyService, JobRepository jobRepository, AsyncBindingService asyncBindingService,
-                                PlatformRepository platformRepository) {
+                                PlatformRepository platformRepository, CredentialStore credentialStore) {
         super(bindingRepository, serviceDefinitionRepository, serviceInstanceRepository,
                 routeBindingRepository, haProxyService, jobRepository, asyncBindingService, platformRepository);
+
+        this.credentialStore = credentialStore;
     }
 
     private static ClientMode getClientModeOrDefault(final Map<String, Object> map) {
@@ -165,6 +170,9 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                     credentials.put("username", username);
                     credentials.put("password", password);
                     userCredentials = String.format("%s:%s@", username, password);
+
+                    credentialStore.createUser(serviceInstance, bindingId, username, password); // Add user to credential store
+
                     success = true;
                 } catch (ServiceBrokerException e) {
                     log.info(MessageFormat.format("Binding failed on host {0}:{1}. {2}", nodeAddress.getIp(), nodeAddress.getPort(), e.getMessage()));
