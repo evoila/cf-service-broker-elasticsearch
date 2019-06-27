@@ -7,11 +7,14 @@ import de.evoila.cf.broker.model.catalog.plan.CustomInstanceGroupConfig;
 import de.evoila.cf.broker.model.catalog.plan.InstanceGroupConfig;
 import de.evoila.cf.broker.model.catalog.plan.Metadata;
 import de.evoila.cf.broker.model.catalog.plan.Plan;
+import de.evoila.cf.broker.service.custom.constants.CredentialConstants;
 import de.evoila.cf.broker.util.MapUtils;
 import de.evoila.cf.cpi.bosh.deployment.DeploymentManager;
 import de.evoila.cf.cpi.bosh.deployment.manifest.InstanceGroup;
 import de.evoila.cf.cpi.bosh.deployment.manifest.Manifest;
 import de.evoila.cf.cpi.bosh.deployment.manifest.instanceGroup.JobV2;
+import de.evoila.cf.security.credentials.CredentialStore;
+import de.evoila.cf.security.credentials.credhub.CredhubClient;
 import org.assertj.core.util.Sets;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -43,8 +46,11 @@ public abstract class BaseElasticsearchDeploymentManager extends DeploymentManag
     public final static String MACHINE_LEARNING_NODES = "machine_learning_nodes";
     public final static String GENERAL_NODES = "general_nodes";
 
-    BaseElasticsearchDeploymentManager(BoshProperties boshProperties, Environment env) {
+    private final CredentialStore credentialStore;
+
+    BaseElasticsearchDeploymentManager(BoshProperties boshProperties, Environment env, CredentialStore credentialStore) {
         super(boshProperties, env);
+        this.credentialStore = credentialStore;
     }
 
     @Override
@@ -64,24 +70,41 @@ public abstract class BaseElasticsearchDeploymentManager extends DeploymentManag
         this.extractPlugins(plan);
         this.updateInstanceGroupConfiguration(manifest, plan);
 
+        // Add user to credential store
         final String elasticsearchPassword = generatePassword();
         final String kibanaPassword = generatePassword();
         final String logstashSystemPassword = generatePassword();
         final String drainMonitoringPassword = generatePassword();
 
-        final List<User> users = serviceInstance.getUsers();
-        users.add(new User("elastic", elasticsearchPassword));
-        users.add(new User("kibana", kibanaPassword));
-        users.add(new User("logstash_system", logstashSystemPassword));
+        credentialStore.createUser(serviceInstance, CredentialConstants.SUPER_ADMIN, CredentialConstants.SUPER_ADMIN, elasticsearchPassword);
+        credentialStore.createUser(serviceInstance, CredentialConstants.KIBANA_USER, CredentialConstants. KIBANA_USER, kibanaPassword);
+        credentialStore.createUser(serviceInstance, CredentialConstants.LOGSTASH_USER, CredentialConstants.LOGSTASH_USER, logstashSystemPassword);
+        credentialStore.createUser(serviceInstance, CredentialConstants.DRAIN_MONITOR_USER, CredentialConstants.DRAIN_MONITOR_USER, drainMonitoringPassword);
 
-        manifest.getInstanceGroups().forEach(instanceGroup -> {
-            final Map<String, Object> instanceGroupProperties = instanceGroup.getProperties();
-            MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.cluster_name", "elasticsearch-" + serviceInstance.getId());
-            MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.elastic.password", elasticsearchPassword);
-            MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.kibana.password", kibanaPassword);
-            MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.logstash_system.password", logstashSystemPassword);
-            MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.drain-monitor.password", drainMonitoringPassword);
-        });
+        if (credentialStore instanceof CredhubClient) {
+            manifest.getInstanceGroups().forEach(instanceGroup -> {
+                final Map<String, Object> instanceGroupProperties = instanceGroup.getProperties();
+                MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.cluster_name", "elasticsearch-" + serviceInstance.getId());
+                MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.elastic.password", "((" + CredentialConstants.SUPER_ADMIN + ".password))");
+                MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.kibana.password", "((" + CredentialConstants.KIBANA_USER + ".password))");
+                MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.logstash_system.password", "((" + CredentialConstants.LOGSTASH_USER + ".password))");
+                MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.drain-monitor.password", "((" + CredentialConstants.DRAIN_MONITOR_USER + ".password))");
+            });
+        } else {
+            final List<User> users = serviceInstance.getUsers();
+            users.add(new User(CredentialConstants.SUPER_ADMIN, elasticsearchPassword));
+            users.add(new User(CredentialConstants.KIBANA_USER, kibanaPassword));
+            users.add(new User(CredentialConstants.LOGSTASH_USER, logstashSystemPassword));
+
+            manifest.getInstanceGroups().forEach(instanceGroup -> {
+                final Map<String, Object> instanceGroupProperties = instanceGroup.getProperties();
+                MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.cluster_name", "elasticsearch-" + serviceInstance.getId());
+                MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.elastic.password", credentialStore.getPassword(serviceInstance, CredentialConstants.SUPER_ADMIN));
+                MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.kibana.password", credentialStore.getPassword(serviceInstance, CredentialConstants.KIBANA_USER));
+                MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.logstash_system.password", credentialStore.getPassword(serviceInstance, CredentialConstants.LOGSTASH_USER));
+                MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.drain-monitor.password", credentialStore.getPassword(serviceInstance, CredentialConstants.DRAIN_MONITOR_USER));
+            });
+        }
     }
 
     private void extractPlugins(Plan plan) {
