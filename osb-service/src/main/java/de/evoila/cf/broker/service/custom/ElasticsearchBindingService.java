@@ -38,7 +38,10 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static de.evoila.cf.broker.service.custom.ElasticsearchBindingService.ClientMode.CLIENT_MODE_IDENTIFIER;
