@@ -1,6 +1,3 @@
-/**
- *
- */
 package de.evoila.cf.broker.service.custom;
 
 import de.evoila.cf.broker.exception.ServiceBrokerException;
@@ -11,6 +8,7 @@ import de.evoila.cf.broker.model.catalog.plan.Plan;
 import de.evoila.cf.broker.repository.*;
 import de.evoila.cf.broker.service.AsyncBindingService;
 import de.evoila.cf.broker.service.HAProxyService;
+import de.evoila.cf.broker.service.custom.constants.CredentialConstants;
 import de.evoila.cf.broker.service.impl.BindingServiceImpl;
 import de.evoila.cf.broker.util.ServiceInstanceUtils;
 import de.evoila.cf.security.credentials.CredentialStore;
@@ -53,11 +51,10 @@ import static de.evoila.cf.broker.service.custom.ElasticsearchBindingService.Cli
 @Service
 public class ElasticsearchBindingService extends BindingServiceImpl {
 
-    public static final String HTTP = "http";
-    public static final String HTTPS = "https";
-    public static final String X_PACK_USERS_URI_PATTERN = "%s/_xpack/security/user";
-    public static final String HEALTH_ENDPOINT_URI_PATTERN = "%s/_cluster/health";
-    public static final String SUPER_ADMIN = "elastic";
+    private static final String HTTP = "http";
+    private static final String HTTPS = "https";
+    private static final String X_PACK_USERS_URI_PATTERN = "%s/_xpack/security/user";
+    private static final String HEALTH_ENDPOINT_URI_PATTERN = "%s/_cluster/health";
     private static final String MANAGER_ROLE = "manager";
     private static final Logger log = LoggerFactory.getLogger(ElasticsearchBindingService.class);
     private static final String URI = "uri";
@@ -159,7 +156,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
             }
 
             // Prepare REST Template
-            final BasicAuthorizationInterceptor basicAuthorizationInterceptor = getInterceptorWithCredentials(SUPER_ADMIN, serviceInstance);
+            final BasicAuthorizationInterceptor basicAuthorizationInterceptor = getInterceptorWithCredentials(CredentialConstants.SUPER_ADMIN, serviceInstance);
             restTemplate.getInterceptors().add(basicAuthorizationInterceptor);
 
             boolean success = false;
@@ -342,7 +339,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
             }
 
             // Prepare REST Template
-            final BasicAuthorizationInterceptor basicAuthorizationInterceptor = getInterceptorWithCredentials(SUPER_ADMIN, serviceInstance);
+            final BasicAuthorizationInterceptor basicAuthorizationInterceptor = getInterceptorWithCredentials(CredentialConstants.SUPER_ADMIN, serviceInstance);
             restTemplate.getInterceptors().add(basicAuthorizationInterceptor);
 
             boolean success = false;

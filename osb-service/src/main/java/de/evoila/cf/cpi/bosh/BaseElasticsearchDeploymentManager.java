@@ -20,8 +20,6 @@ import org.assertj.core.util.Sets;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
-import java.math.BigInteger;
-import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,27 +62,17 @@ public abstract class BaseElasticsearchDeploymentManager extends DeploymentManag
         if (customParameters != null && !customParameters.isEmpty())
             properties.putAll(customParameters);
 
-        Map<String, Object> manifestProperties = manifest.getInstanceGroups()
-                .stream()
-                .filter(i -> INSTANCE_GROUPS.contains(i.getName()))
-                .findAny().get().getProperties();
-
         this.extractPlugins(plan);
         this.updateInstanceGroupConfiguration(manifest, plan);
 
         // Add user to credential store
-        final String elasticsearchPassword = generatePassword();
-        final String kibanaPassword = generatePassword();
-        final String logstashSystemPassword = generatePassword();
-        final String drainMonitoringPassword = generatePassword();
-        final String backupAgentPassword = generatePassword();
 
-        credentialStore.createUser(serviceInstance, CredentialConstants.SUPER_ADMIN, CredentialConstants.SUPER_ADMIN, elasticsearchPassword);
-        credentialStore.createUser(serviceInstance, CredentialConstants.KIBANA_USER, CredentialConstants. KIBANA_USER, kibanaPassword);
-        credentialStore.createUser(serviceInstance, CredentialConstants.LOGSTASH_USER, CredentialConstants.LOGSTASH_USER, logstashSystemPassword);
-        credentialStore.createUser(serviceInstance, CredentialConstants.DRAIN_MONITOR_USER, CredentialConstants.DRAIN_MONITOR_USER, drainMonitoringPassword);
-        credentialStore.createUser(serviceInstance, DefaultCredentialConstants.BACKUP_AGENT_CREDENTIALS, CredentialConstants.BACKUP_AGENT_USER, backupAgentPassword);
-        credentialStore.createUser(serviceInstance, DefaultCredentialConstants.BACKUP_CREDENTIALS, CredentialConstants.SUPER_ADMIN, elasticsearchPassword);
+        credentialStore.createUser(serviceInstance, CredentialConstants.SUPER_ADMIN, CredentialConstants.SUPER_ADMIN);
+        credentialStore.createUser(serviceInstance, CredentialConstants.KIBANA_USER, CredentialConstants. KIBANA_USER);
+        credentialStore.createUser(serviceInstance, CredentialConstants.LOGSTASH_USER, CredentialConstants.LOGSTASH_USER);
+        credentialStore.createUser(serviceInstance, CredentialConstants.DRAIN_MONITOR_USER, CredentialConstants.DRAIN_MONITOR_USER);
+        credentialStore.createUser(serviceInstance, DefaultCredentialConstants.BACKUP_AGENT_CREDENTIALS, CredentialConstants.BACKUP_AGENT_USER);
+        credentialStore.createUser(serviceInstance, DefaultCredentialConstants.BACKUP_CREDENTIALS, CredentialConstants.SUPER_ADMIN);
 
         if (credentialStore instanceof CredhubClient) {
             manifest.getInstanceGroups().forEach(instanceGroup -> {
@@ -105,9 +93,9 @@ public abstract class BaseElasticsearchDeploymentManager extends DeploymentManag
             });
         } else {
             final List<User> users = serviceInstance.getUsers();
-            users.add(new User(CredentialConstants.SUPER_ADMIN, elasticsearchPassword));
-            users.add(new User(CredentialConstants.KIBANA_USER, kibanaPassword));
-            users.add(new User(CredentialConstants.LOGSTASH_USER, logstashSystemPassword));
+            users.add(new User(CredentialConstants.SUPER_ADMIN, credentialStore.getPassword(serviceInstance, CredentialConstants.SUPER_ADMIN)));
+            users.add(new User(CredentialConstants.KIBANA_USER, credentialStore.getPassword(serviceInstance, CredentialConstants.KIBANA_USER)));
+            users.add(new User(CredentialConstants.LOGSTASH_USER, credentialStore.getPassword(serviceInstance, CredentialConstants.LOGSTASH_USER)));
 
             manifest.getInstanceGroups().forEach(instanceGroup -> {
                 final Map<String, Object> instanceGroupProperties = instanceGroup.getProperties();
@@ -222,11 +210,5 @@ public abstract class BaseElasticsearchDeploymentManager extends DeploymentManag
             if (customInstanceGroupConfig.getConsumes() != null)
                 instanceGroup.getJobs().forEach(m -> m.setConsumes(customInstanceGroupConfig.getConsumes()));
         }
-    }
-
-    private String generatePassword() {
-        final SecureRandom random = new SecureRandom();
-        final String password = new BigInteger(130, random).toString(32);
-        return password;
     }
 }
