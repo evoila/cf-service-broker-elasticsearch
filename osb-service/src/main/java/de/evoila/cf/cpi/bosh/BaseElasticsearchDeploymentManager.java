@@ -84,6 +84,7 @@ public abstract class BaseElasticsearchDeploymentManager extends DeploymentManag
         credentialStore.createUser(serviceInstance, CredentialConstants.LOGSTASH_USER, CredentialConstants.LOGSTASH_USER, logstashSystemPassword);
         credentialStore.createUser(serviceInstance, CredentialConstants.DRAIN_MONITOR_USER, CredentialConstants.DRAIN_MONITOR_USER, drainMonitoringPassword);
         credentialStore.createUser(serviceInstance, DefaultCredentialConstants.BACKUP_AGENT_CREDENTIALS, CredentialConstants.BACKUP_AGENT_USER, backupAgentPassword);
+        credentialStore.createUser(serviceInstance, DefaultCredentialConstants.BACKUP_CREDENTIALS, CredentialConstants.SUPER_ADMIN, elasticsearchPassword);
 
         if (credentialStore instanceof CredhubClient) {
             manifest.getInstanceGroups().forEach(instanceGroup -> {
