@@ -42,4 +42,9 @@ public class CredentialConstants {
      * The user the drain monitor uses.
      */
     public static String DRAIN_MONITOR_USER = "drain_monitor";
+
+    /**
+     * The user for connecting to the backup agent.
+     */
+    public static String BACKUP_AGENT_USER = "backup";
 }
