@@ -235,7 +235,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         if (serviceInstance == null) {
             throw new IllegalArgumentException("ServiceInstance must not be null!");
         }
-        final String adminPassword = extractUserPassword(serviceInstance, username);
+        final String adminPassword = credentialStore.getUser(serviceInstance, username).getPassword();
 
         return new BasicAuthorizationInterceptor(username, adminPassword);
     }
@@ -283,14 +283,6 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
     private String generatePassword() {
         final SecureRandom random = new SecureRandom();
         return new BigInteger(130, random).toString(32);
-    }
-
-    private String extractUserPassword(ServiceInstance serviceInstance, String userName) {
-        return serviceInstance
-                .getUsers().stream()
-                .filter(u -> u.getUsername().equals(userName))
-                .map(User::getPassword)
-                .findFirst().orElse("");
     }
 
     private String generateUsersUri(String endpoint, String protocolMode) {
