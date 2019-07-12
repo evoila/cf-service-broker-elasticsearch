@@ -165,7 +165,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                 final String endpoint = String.format("%s:%s", nodeAddress.getIp(), nodeAddress.getPort());
 
                 try {
-                    log.info(MessageFormat.format("Try binding on host {0}:{1} with URI \"{2}\" ", nodeAddress.getIp(), nodeAddress.getPort(), userCreationUri));
+                    log.info(MessageFormat.format("Try binding on host {0}:{1,number,#} with URI \"{2}\" ", nodeAddress.getIp(), nodeAddress.getPort(), userCreationUri));
                     addUserToElasticsearch(username, userCreationUri, password, restTemplate);
                     credentials.put("username", username);
                     credentials.put("password", password);
@@ -175,7 +175,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
 
                     success = true;
                 } catch (ServiceBrokerException e) {
-                    log.info(MessageFormat.format("Binding failed on host {0}:{1}. {2}", nodeAddress.getIp(), nodeAddress.getPort(), e.getMessage()));
+                    log.info(MessageFormat.format("Binding failed on host {0}:{1,number,#}. {2}", nodeAddress.getIp(), nodeAddress.getPort(), e.getMessage()));
                 }
 
                 if (success) {
@@ -358,7 +358,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                 final String userCreationUri = generateUsersUri(endpoint, protocolMode);
 
                 try {
-                    log.info(MessageFormat.format("Try binding on host {0}:{1} with URI \"{2}\" ", a.getIp(), a.getPort(), userCreationUri));
+                    log.info(MessageFormat.format("Try binding on host {0}:{1,number,#} with URI \"{2}\" ", a.getIp(), a.getPort(), userCreationUri));
                     deleteUserFromElasticsearch(bindingId, userCreationUri, restTemplate);
 
                     credentialStore.deleteCredentials(serviceInstance, bindingId);  // Delete user from credential store
