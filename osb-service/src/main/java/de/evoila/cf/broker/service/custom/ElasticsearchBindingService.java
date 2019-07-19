@@ -334,6 +334,12 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
 
         log.info(MessageFormat.format("Deleting binding ''{0}''.", bindingId));
 
+        // Built-In User case
+        if (ClientMode.isBuiltInUser(clientMode)) {
+            log.info(MessageFormat.format("Binding ''{0}'' deleted.", bindingId));
+            return;
+        }
+
         if (ElasticsearchUtilities.planContainsXPack(plan)) {
             if (ElasticsearchUtilities.isHttpsEnabled(plan)) {
                 protocolMode = HTTPS;
