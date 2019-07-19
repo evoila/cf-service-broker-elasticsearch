@@ -387,7 +387,8 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
     }
 
     protected enum ClientMode {
-        EGRESS("egress"), INGRESS("ingress");
+        EGRESS("egress"), INGRESS("ingress"),
+        SUPERUSER("superuser"), KIBANA("kibana"), LOGSTASH("logstash");
 
         public static final String CLIENT_MODE_IDENTIFIER = "clientMode";
 
@@ -397,14 +398,29 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
             this.identifier = identifier;
         }
 
+        /**
+         * This method returns whether the ClientMode is a Built-In User or not.
+         * @param clientMode the client mode to check
+         * @return true if is built-in user, false otherwise
+         */
+        public static boolean isBuiltInUser(ClientMode clientMode) {
+            return clientMode == SUPERUSER || clientMode == KIBANA || clientMode == LOGSTASH;
+        }
+
         public static ClientMode byIdentifier(String identifier) {
             switch (identifier) {
                 case "egress":
                     return EGRESS;
                 case "ingress":
                     return INGRESS;
+                case "superuser":
+                    return SUPERUSER;
+                case "kibana":
+                    return KIBANA;
+                case "logstash":
+                    return LOGSTASH;
                 default:
-                    throw new IllegalArgumentException(String.format("Unknown ClientMode identifier {0}.", identifier));
+                    throw new IllegalArgumentException(MessageFormat.format("Unknown ClientMode identifier {0}.", identifier));
             }
         }
     }
