@@ -5,6 +5,7 @@ import de.evoila.cf.broker.exception.ServiceInstanceBindingException;
 import de.evoila.cf.broker.model.*;
 import de.evoila.cf.broker.model.catalog.ServerAddress;
 import de.evoila.cf.broker.model.catalog.plan.Plan;
+import de.evoila.cf.broker.model.credential.UsernamePasswordCredential;
 import de.evoila.cf.broker.repository.*;
 import de.evoila.cf.broker.service.AsyncBindingService;
 import de.evoila.cf.broker.service.HAProxyService;
@@ -143,6 +144,18 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         String userCredentials = "";
 
         if (ElasticsearchUtilities.planContainsXPack(plan)) {
+
+            // Built-In User case
+            if (ClientMode.isBuiltInUser(clientMode)) {
+                log.info("Built-In user binding requested.");
+                UsernamePasswordCredential builtInUserCredential = getCredentialForClientMode(clientMode, serviceInstance);
+                credentials.put("username", builtInUserCredential.getUsername());
+                credentials.put("password", builtInUserCredential.getPassword());
+
+                log.info(MessageFormat.format("Return binding for built-in user ''{0}''.", builtInUserCredential.getUsername()));
+                return credentials;
+            }
+
             final String username = bindingId;
             final String password = generatePassword();
             final RestTemplate restTemplate;
