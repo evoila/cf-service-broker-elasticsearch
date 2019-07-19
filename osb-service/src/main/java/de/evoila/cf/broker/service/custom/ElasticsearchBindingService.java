@@ -386,6 +386,25 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         }
     }
 
+    /**
+     * Returns a UsernamePasswordCredential associated with an client mode.
+     * @param clientMode the client mode
+     * @param serviceInstance the service instance
+     * @return a UsernamePasswordCredential associated with an client mode
+     */
+    private UsernamePasswordCredential getCredentialForClientMode(ClientMode clientMode, ServiceInstance serviceInstance) {
+        switch (clientMode) {
+            case SUPERUSER:
+                return credentialStore.getUser(serviceInstance, CredentialConstants.SUPER_ADMIN);
+            case KIBANA:
+                return credentialStore.getUser(serviceInstance, CredentialConstants.KIBANA_USER);
+            case LOGSTASH:
+                return credentialStore.getUser(serviceInstance, CredentialConstants.LOGSTASH_USER);
+            default:
+                throw new IllegalArgumentException(MessageFormat.format("ClientMode identifier ''{0}'' is not associated with an built-in user.", clientMode));
+        }
+    }
+
     protected enum ClientMode {
         EGRESS("egress"), INGRESS("ingress"),
         SUPERUSER("superuser"), KIBANA("kibana"), LOGSTASH("logstash");
