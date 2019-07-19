@@ -1,0 +1,20 @@
+# This is an example manifest for pushing your elasticsearch 
+# service broker to Cloudfoundry.
+---
+instances: 1
+timeout: 180
+memory: 1024M
+
+applications:
+- name: osb-elasticsearch
+  routes:
+##    - route: CHANGEME!
+  path: osb-service/target/osb-elasticsearch-1.2.0.jar
+  buildpack: https://github.com/cloudfoundry/java-buildpack.git
+  env:
+    SPRING_PROFILES_ACTIVE: cloud, dev.eu-de-central
+    JAVA_OPTS: -Djava.security.egd=file:/dev/urandom
+##    SPRING_CLOUD_CONFIG_URI: CHANGEME!
+##    SPRING_CLOUD_CONFIG_USERNAME: CHANGEME!
+##    SPRING_CLOUD_CONFIG_PASSWORD: CHANGEME!
+    SPRING_APPLICATION_NAME: osb-elasticsearch
