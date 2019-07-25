@@ -2,7 +2,6 @@ package de.evoila.cf.cpi.bosh;
 
 import de.evoila.cf.broker.bean.BoshProperties;
 import de.evoila.cf.broker.model.ServiceInstance;
-import de.evoila.cf.broker.model.User;
 import de.evoila.cf.broker.model.catalog.plan.CustomInstanceGroupConfig;
 import de.evoila.cf.broker.model.catalog.plan.InstanceGroupConfig;
 import de.evoila.cf.broker.model.catalog.plan.Metadata;
@@ -21,7 +20,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -92,11 +90,6 @@ public abstract class BaseElasticsearchDeploymentManager extends DeploymentManag
                 }
             });
         } else {
-            final List<User> users = serviceInstance.getUsers();
-            users.add(new User(CredentialConstants.SUPER_ADMIN, credentialStore.getPassword(serviceInstance, CredentialConstants.SUPER_ADMIN)));
-            users.add(new User(CredentialConstants.KIBANA_USER, credentialStore.getPassword(serviceInstance, CredentialConstants.KIBANA_USER)));
-            users.add(new User(CredentialConstants.LOGSTASH_USER, credentialStore.getPassword(serviceInstance, CredentialConstants.LOGSTASH_USER)));
-
             manifest.getInstanceGroups().forEach(instanceGroup -> {
                 final Map<String, Object> instanceGroupProperties = instanceGroup.getProperties();
                 MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.cluster_name", "elasticsearch-" + serviceInstance.getId());
