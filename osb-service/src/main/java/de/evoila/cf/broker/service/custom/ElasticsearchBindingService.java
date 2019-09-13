@@ -1,6 +1,3 @@
-/**
- *
- */
 package de.evoila.cf.broker.service.custom;
 
 import de.evoila.cf.broker.exception.ServiceBrokerException;
@@ -8,11 +5,14 @@ import de.evoila.cf.broker.exception.ServiceInstanceBindingException;
 import de.evoila.cf.broker.model.*;
 import de.evoila.cf.broker.model.catalog.ServerAddress;
 import de.evoila.cf.broker.model.catalog.plan.Plan;
+import de.evoila.cf.broker.model.credential.UsernamePasswordCredential;
 import de.evoila.cf.broker.repository.*;
 import de.evoila.cf.broker.service.AsyncBindingService;
 import de.evoila.cf.broker.service.HAProxyService;
+import de.evoila.cf.broker.service.custom.constants.CredentialConstants;
 import de.evoila.cf.broker.service.impl.BindingServiceImpl;
 import de.evoila.cf.broker.util.ServiceInstanceUtils;
+import de.evoila.cf.security.credentials.CredentialStore;
 import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
@@ -37,7 +37,10 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static de.evoila.cf.broker.service.custom.ElasticsearchBindingService.ClientMode.CLIENT_MODE_IDENTIFIER;
@@ -49,21 +52,24 @@ import static de.evoila.cf.broker.service.custom.ElasticsearchBindingService.Cli
 @Service
 public class ElasticsearchBindingService extends BindingServiceImpl {
 
-    public static final String HTTP = "http";
-    public static final String HTTPS = "https";
-    public static final String X_PACK_USERS_URI_PATTERN = "%s/_xpack/security/user";
-    public static final String HEALTH_ENDPOINT_URI_PATTERN = "%s/_cluster/health";
-    public static final String SUPER_ADMIN = "elastic";
+    private static final String HTTP = "http";
+    private static final String HTTPS = "https";
+    private static final String X_PACK_USERS_URI_PATTERN = "%s/_xpack/security/user";
+    private static final String HEALTH_ENDPOINT_URI_PATTERN = "%s/_cluster/health";
     private static final String MANAGER_ROLE = "manager";
     private static final Logger log = LoggerFactory.getLogger(ElasticsearchBindingService.class);
     private static final String URI = "uri";
 
+    private final CredentialStore credentialStore;
+
     ElasticsearchBindingService(BindingRepository bindingRepository, ServiceDefinitionRepository serviceDefinitionRepository,
                                 ServiceInstanceRepository serviceInstanceRepository, RouteBindingRepository routeBindingRepository,
                                 @Autowired(required = false) HAProxyService haProxyService, JobRepository jobRepository, AsyncBindingService asyncBindingService,
-                                PlatformRepository platformRepository) {
+                                PlatformRepository platformRepository, CredentialStore credentialStore) {
         super(bindingRepository, serviceDefinitionRepository, serviceInstanceRepository,
                 routeBindingRepository, haProxyService, jobRepository, asyncBindingService, platformRepository);
+
+        this.credentialStore = credentialStore;
     }
 
     private static ClientMode getClientModeOrDefault(final Map<String, Object> map) {
@@ -138,6 +144,18 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         String userCredentials = "";
 
         if (ElasticsearchUtilities.planContainsXPack(plan)) {
+
+            // Built-In User case
+            if (ClientMode.isBuiltInUser(clientMode)) {
+                log.info("Built-In user binding requested.");
+                UsernamePasswordCredential builtInUserCredential = getCredentialForClientMode(clientMode, serviceInstance);
+                credentials.put("username", builtInUserCredential.getUsername());
+                credentials.put("password", builtInUserCredential.getPassword());
+
+                log.info(MessageFormat.format("Return binding for built-in user ''{0}''.", builtInUserCredential.getUsername()));
+                return credentials;
+            }
+
             final String username = bindingId;
             final String password = generatePassword();
             final RestTemplate restTemplate;
@@ -151,7 +169,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
             }
 
             // Prepare REST Template
-            final BasicAuthorizationInterceptor basicAuthorizationInterceptor = getInterceptorWithCredentials(SUPER_ADMIN, serviceInstance);
+            final BasicAuthorizationInterceptor basicAuthorizationInterceptor = getInterceptorWithCredentials(CredentialConstants.SUPER_ADMIN, serviceInstance);
             restTemplate.getInterceptors().add(basicAuthorizationInterceptor);
 
             boolean success = false;
@@ -160,14 +178,17 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                 final String endpoint = String.format("%s:%s", nodeAddress.getIp(), nodeAddress.getPort());
 
                 try {
-                    log.info(MessageFormat.format("Try binding on host {0}:{1} with URI \"{2}\" ", nodeAddress.getIp(), nodeAddress.getPort(), userCreationUri));
+                    log.info(MessageFormat.format("Try binding on host {0}:{1,number,#} with URI \"{2}\" ", nodeAddress.getIp(), nodeAddress.getPort(), userCreationUri));
                     addUserToElasticsearch(username, userCreationUri, password, restTemplate);
                     credentials.put("username", username);
                     credentials.put("password", password);
                     userCredentials = String.format("%s:%s@", username, password);
+
+                    credentialStore.createUser(serviceInstance, bindingId, username, password); // Add user to credential store
+
                     success = true;
                 } catch (ServiceBrokerException e) {
-                    log.info(MessageFormat.format("Binding failed on host {0}:{1}. {2}", nodeAddress.getIp(), nodeAddress.getPort(), e.getMessage()));
+                    log.info(MessageFormat.format("Binding failed on host {0}:{1,number,#}. {2}", nodeAddress.getIp(), nodeAddress.getPort(), e.getMessage()));
                 }
 
                 if (success) {
@@ -227,7 +248,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         if (serviceInstance == null) {
             throw new IllegalArgumentException("ServiceInstance must not be null!");
         }
-        final String adminPassword = extractUserPassword(serviceInstance, username);
+        final String adminPassword = credentialStore.getUser(serviceInstance, username).getPassword();
 
         return new BasicAuthorizationInterceptor(username, adminPassword);
     }
@@ -277,14 +298,6 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         return new BigInteger(130, random).toString(32);
     }
 
-    private String extractUserPassword(ServiceInstance serviceInstance, String userName) {
-        return serviceInstance
-                .getUsers().stream()
-                .filter(u -> u.getUsername().equals(userName))
-                .map(User::getPassword)
-                .findFirst().orElse("");
-    }
-
     private String generateUsersUri(String endpoint, String protocolMode) {
         final String adminUri = String.format("%s://%s", protocolMode, endpoint);
         return String.format(X_PACK_USERS_URI_PATTERN, adminUri);
@@ -321,6 +334,12 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
 
         log.info(MessageFormat.format("Deleting binding ''{0}''.", bindingId));
 
+        // Built-In User case
+        if (ClientMode.isBuiltInUser(clientMode)) {
+            log.info(MessageFormat.format("Binding ''{0}'' deleted.", bindingId));
+            return;
+        }
+
         if (ElasticsearchUtilities.planContainsXPack(plan)) {
             if (ElasticsearchUtilities.isHttpsEnabled(plan)) {
                 protocolMode = HTTPS;
@@ -331,7 +350,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
             }
 
             // Prepare REST Template
-            final BasicAuthorizationInterceptor basicAuthorizationInterceptor = getInterceptorWithCredentials(SUPER_ADMIN, serviceInstance);
+            final BasicAuthorizationInterceptor basicAuthorizationInterceptor = getInterceptorWithCredentials(CredentialConstants.SUPER_ADMIN, serviceInstance);
             restTemplate.getInterceptors().add(basicAuthorizationInterceptor);
 
             boolean success = false;
@@ -350,8 +369,11 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
                 final String userCreationUri = generateUsersUri(endpoint, protocolMode);
 
                 try {
-                    log.info(MessageFormat.format("Try binding on host {0}:{1} with URI \"{2}\" ", a.getIp(), a.getPort(), userCreationUri));
+                    log.info(MessageFormat.format("Try binding on host {0}:{1,number,#} with URI \"{2}\" ", a.getIp(), a.getPort(), userCreationUri));
                     deleteUserFromElasticsearch(bindingId, userCreationUri, restTemplate);
+
+                    credentialStore.deleteCredentials(serviceInstance, bindingId);  // Delete user from credential store
+
                     success = true;
                 } catch (ServiceBrokerException e) {
                     log.info(MessageFormat.format("Failed deleting binding ''{0}'' on endpoint ''{1}''. {2}", bindingId, endpoint, e.getMessage()));
@@ -383,8 +405,28 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         }
     }
 
+    /**
+     * Returns a UsernamePasswordCredential associated with an client mode.
+     * @param clientMode the client mode
+     * @param serviceInstance the service instance
+     * @return a UsernamePasswordCredential associated with an client mode
+     */
+    private UsernamePasswordCredential getCredentialForClientMode(ClientMode clientMode, ServiceInstance serviceInstance) {
+        switch (clientMode) {
+            case SUPERUSER:
+                return credentialStore.getUser(serviceInstance, CredentialConstants.SUPER_ADMIN);
+            case KIBANA:
+                return credentialStore.getUser(serviceInstance, CredentialConstants.KIBANA_USER);
+            case LOGSTASH:
+                return credentialStore.getUser(serviceInstance, CredentialConstants.LOGSTASH_USER);
+            default:
+                throw new IllegalArgumentException(MessageFormat.format("ClientMode identifier ''{0}'' is not associated with an built-in user.", clientMode));
+        }
+    }
+
     protected enum ClientMode {
-        EGRESS("egress"), INGRESS("ingress");
+        EGRESS("egress"), INGRESS("ingress"),
+        SUPERUSER("superuser"), KIBANA("kibana"), LOGSTASH("logstash");
 
         public static final String CLIENT_MODE_IDENTIFIER = "clientMode";
 
@@ -394,14 +436,29 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
             this.identifier = identifier;
         }
 
+        /**
+         * This method returns whether the ClientMode is a Built-In User or not.
+         * @param clientMode the client mode to check
+         * @return true if is built-in user, false otherwise
+         */
+        public static boolean isBuiltInUser(ClientMode clientMode) {
+            return clientMode == SUPERUSER || clientMode == KIBANA || clientMode == LOGSTASH;
+        }
+
         public static ClientMode byIdentifier(String identifier) {
             switch (identifier) {
                 case "egress":
                     return EGRESS;
                 case "ingress":
                     return INGRESS;
+                case "superuser":
+                    return SUPERUSER;
+                case "kibana":
+                    return KIBANA;
+                case "logstash":
+                    return LOGSTASH;
                 default:
-                    throw new IllegalArgumentException(String.format("Unknown ClientMode identifier {0}.", identifier));
+                    throw new IllegalArgumentException(MessageFormat.format("Unknown ClientMode identifier {0}.", identifier));
             }
         }
     }

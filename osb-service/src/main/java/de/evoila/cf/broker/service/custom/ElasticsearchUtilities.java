@@ -49,7 +49,7 @@ public class ElasticsearchUtilities {
         try {
             pluginsRaw = extractProperty(plan.getMetadata().getProperties(), PROPERTIES_HTTPS_ENABLED);
         } catch (IllegalArgumentException e) {
-            log.error("Property " + PROPERTIES_HTTPS_ENABLED + " is missing for plan " + plan.getName(), e);
+            log.error("Property " + PROPERTIES_HTTPS_ENABLED + " is missing for plan " + plan.getName() + ". Using default: HTTP");
             return false;
         }
 

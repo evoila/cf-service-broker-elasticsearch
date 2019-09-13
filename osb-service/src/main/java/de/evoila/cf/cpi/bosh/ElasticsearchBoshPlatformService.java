@@ -7,6 +7,7 @@ import de.evoila.cf.broker.model.catalog.plan.Plan;
 import de.evoila.cf.broker.repository.PlatformRepository;
 import de.evoila.cf.broker.service.CatalogService;
 import de.evoila.cf.broker.service.availability.ServicePortAvailabilityVerifier;
+import de.evoila.cf.security.credentials.CredentialStore;
 import io.bosh.client.deployments.Deployment;
 import io.bosh.client.errands.ErrandSummary;
 import io.bosh.client.vms.Vm;
@@ -28,8 +29,8 @@ public class ElasticsearchBoshPlatformService extends BoshPlatformService {
     ElasticsearchBoshPlatformService(PlatformRepository repository, CatalogService catalogService,
                                      ServicePortAvailabilityVerifier availabilityVerifier,
                                      BoshProperties boshProperties, Optional<DashboardClient> dashboardClient,
-                                     Environment env) {
-        super(repository, catalogService, availabilityVerifier, boshProperties, dashboardClient, new ElasticsearchDeploymentManager(boshProperties, env));
+                                     Environment env, CredentialStore credentialStore) {
+        super(repository, catalogService, availabilityVerifier, boshProperties, dashboardClient, new ElasticsearchDeploymentManager(boshProperties, env, credentialStore));
     }
 
     protected void runDeleteErrands(ServiceInstance instance, Deployment deployment, Observable<List<ErrandSummary>> errands) {

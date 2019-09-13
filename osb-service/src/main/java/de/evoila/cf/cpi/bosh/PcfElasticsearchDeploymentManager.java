@@ -8,6 +8,7 @@ import de.evoila.cf.broker.model.catalog.Catalog;
 import de.evoila.cf.broker.model.catalog.plan.CustomInstanceGroupConfig;
 import de.evoila.cf.broker.model.catalog.plan.Plan;
 import de.evoila.cf.broker.util.MapUtils;
+import de.evoila.cf.security.credentials.CredentialStore;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -23,8 +24,8 @@ import java.util.List;
 @Component
 public class PcfElasticsearchDeploymentManager extends BaseElasticsearchDeploymentManager {
 
-    PcfElasticsearchDeploymentManager(Catalog catalog, BoshProperties boshProperties, Environment env) {
-        super(boshProperties, env);
+    PcfElasticsearchDeploymentManager(Catalog catalog, BoshProperties boshProperties, Environment env, CredentialStore credentialStore) {
+        super(boshProperties, env, credentialStore);
 
         catalog.getServices().forEach(s -> s.getPlans().forEach(this::parseInstanceGroups));
         catalog.getServices().forEach(s -> s.getPlans().forEach(this::parsePlugins));

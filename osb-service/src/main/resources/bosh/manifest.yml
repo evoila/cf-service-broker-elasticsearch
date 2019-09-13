@@ -64,8 +64,6 @@ instance_groups:
     properties:
       backup_agent:
         skip_storage: true
-        username: backup
-        password: rulez
   properties:
     elasticsearch:
       cluster_name: elasticsearch-cluster
@@ -115,8 +113,6 @@ instance_groups:
     properties:
       backup_agent:
         skip_storage: true
-        username: backup
-        password: rulez
   properties:
     elasticsearch:
       cluster_name: elasticsearch-cluster
@@ -164,8 +160,6 @@ instance_groups:
     properties:
       backup_agent:
         skip_storage: true
-        username: backup
-        password: rulez
   properties:
     elasticsearch:
       cluster_name: elasticsearch-cluster
@@ -215,8 +209,6 @@ instance_groups:
     properties:
       backup_agent:
         skip_storage: true
-        username: backup
-        password: rulez
   properties:
     elasticsearch:
       cluster_name: elasticsearch-cluster
@@ -266,8 +258,6 @@ instance_groups:
     properties:
       backup_agent:
         skip_storage: true
-        username: backup
-        password: rulez
   properties:
     elasticsearch:
       cluster_name: elasticsearch-cluster
