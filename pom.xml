@@ -26,7 +26,7 @@
     <properties>
         <resource.dir>${basedir}/../osb-service/src/main/resources</resource.dir>
         <dashboard.module>elasticsearch</dashboard.module>
-        <spring-cloud.version>Hoxton.RELEASE</spring-cloud.version>
+        <spring-cloud.version>Greenwich.SR4</spring-cloud.version>
         <java.version>12</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
