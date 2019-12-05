@@ -42,6 +42,11 @@
             <artifactId>bosh</artifactId>
             <version>${deployment.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.esotericsoftware.minlog</groupId>
+            <artifactId>minlog</artifactId>
+            <version>1.2</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -56,10 +61,6 @@
                 <configuration>
                     <source>12</source>
                     <target>12</target>
-                    <compilerArgs>
-                        <arg>--add-exports</arg>
-                        <arg>java.base/sun.security.util=ALL-UNNAMED</arg>
-                    </compilerArgs>
                 </configuration>
             </plugin>
         </plugins>
