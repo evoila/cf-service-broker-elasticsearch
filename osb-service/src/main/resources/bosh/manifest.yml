@@ -17,7 +17,7 @@ variables:
 releases:
 - name: osb-bosh-elasticsearch
   version: latest
-- name: osb-bosh-monitoring
+- name: prometheus
   version: latest
 
 update:
@@ -52,18 +52,8 @@ instance_groups:
     release: osb-bosh-elasticsearch
     consumes:
       database: {from: ingest_nodes}
-  - name: node_exporter
-    release: osb-bosh-monitoring
   - name: elasticsearch_exporter
     release: osb-bosh-monitoring
-  - name: backup-agent
-    release: osb-bosh-elasticsearch
-    consumes:
-      database:
-        from: discovery_nodes
-    properties:
-      backup_agent:
-        skip_storage: true
   properties:
     elasticsearch:
       cluster_name: elasticsearch-cluster
@@ -75,8 +65,7 @@ instance_groups:
             ssl:
               certificate_authorities: ((ssl_ca.certificate))
               ca_key: ((ssl_ca.private_key))
-          transport:
-            ssl:
+            transport:
               certificate_authorities: ((transport_ca.certificate))
               ca_key: ((transport_ca.private_key))
 #      discovery:
@@ -101,18 +90,6 @@ instance_groups:
     release: osb-bosh-elasticsearch
     consumes:
       database: {from: coordinating_nodes}
-  - name: node_exporter
-    release: osb-bosh-monitoring
-  - name: elasticsearch_exporter
-    release: osb-bosh-monitoring
-  - name: backup-agent
-    release: osb-bosh-elasticsearch
-    consumes:
-      database:
-        from: discovery_nodes
-    properties:
-      backup_agent:
-        skip_storage: true
   properties:
     elasticsearch:
       cluster_name: elasticsearch-cluster
@@ -122,8 +99,7 @@ instance_groups:
             ssl:
               certificate_authorities: ((ssl_ca.certificate))
               ca_key: ((ssl_ca.private_key))
-          transport:
-            ssl:
+            transport:
               certificate_authorities: ((transport_ca.certificate))
               ca_key: ((transport_ca.private_key))
 #      discovery:
@@ -148,18 +124,6 @@ instance_groups:
     release: osb-bosh-elasticsearch
     consumes:
       database: {from: master_eligible_nodes}
-  - name: node_exporter
-    release: osb-bosh-monitoring
-  - name: elasticsearch_exporter
-    release: osb-bosh-monitoring
-  - name: backup-agent
-    release: osb-bosh-elasticsearch
-    consumes:
-      database:
-        from: discovery_nodes
-    properties:
-      backup_agent:
-        skip_storage: true
   properties:
     elasticsearch:
       cluster_name: elasticsearch-cluster
@@ -171,8 +135,7 @@ instance_groups:
             ssl:
               certificate_authorities: ((ssl_ca.certificate))
               ca_key: ((ssl_ca.private_key))
-          transport:
-            ssl:
+            transport:
               certificate_authorities: ((transport_ca.certificate))
               ca_key: ((transport_ca.private_key))
 #      discovery:
@@ -197,18 +160,6 @@ instance_groups:
     release: osb-bosh-elasticsearch
     consumes:
       database: {from: data_nodes}
-  - name: node_exporter
-    release: osb-bosh-monitoring
-  - name: elasticsearch_exporter
-    release: osb-bosh-monitoring
-  - name: backup-agent
-    release: osb-bosh-elasticsearch
-    consumes:
-      database:
-        from: discovery_nodes
-    properties:
-      backup_agent:
-        skip_storage: true
   properties:
     elasticsearch:
       cluster_name: elasticsearch-cluster
@@ -220,8 +171,7 @@ instance_groups:
             ssl:
               certificate_authorities: ((ssl_ca.certificate))
               ca_key: ((ssl_ca.private_key))
-          transport:
-            ssl:
+            transport:
               certificate_authorities: ((transport_ca.certificate))
               ca_key: ((transport_ca.private_key))
 #      discovery:
@@ -246,18 +196,32 @@ instance_groups:
     release: osb-bosh-elasticsearch
     consumes:
       database: {from: discovery_nodes}
-  - name: node_exporter
-    release: osb-bosh-monitoring
   - name: elasticsearch_exporter
-    release: osb-bosh-monitoring
-  - name: backup-agent
-    release: osb-bosh-elasticsearch
-    consumes:
-      database:
-        from: discovery_nodes
+    release: prometheus
     properties:
-      backup_agent:
-        skip_storage: true
+      elasticsearch_exporter:
+        es:
+          uri: https://elastic:((elastic_credentials.password))@127.0.0.1:9200
+          ca_cert: http_ssl.ca
+          ssl_skip_verify: true
+          cluster_settings: true
+          indices: true
+          indices_settings: true
+          shards: true
+  - name: blackbox_exporter
+    release: prometheus
+    properties:
+      blackbox_exporter:
+        config:
+          modules:
+            http_2xx:
+              prober: http
+              http:
+                basic_auth:
+                  username: elastic
+                  password: ((elastic_credentials.password))
+                tls_config:
+                  insecure_skip_verify: true
   properties:
     elasticsearch:
       cluster_name: elasticsearch-cluster
@@ -271,8 +235,7 @@ instance_groups:
             ssl:
               certificate_authorities: ((ssl_ca.certificate))
               ca_key: ((ssl_ca.private_key))
-          transport:
-            ssl:
+            transport:
               certificate_authorities: ((transport_ca.certificate))
               ca_key: ((transport_ca.private_key))
 #      discovery:
