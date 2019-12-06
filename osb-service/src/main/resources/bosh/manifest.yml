@@ -17,7 +17,7 @@ variables:
 releases:
 - name: osb-bosh-elasticsearch
   version: latest
-- name: osb-bosh-monitoring
+- name: prometheus
   version: latest
 
 update:
