@@ -27,7 +27,7 @@
         <resource.dir>${basedir}/../osb-service/src/main/resources</resource.dir>
         <dashboard.module>elasticsearch</dashboard.module>
         <spring-cloud.version>Greenwich.RELEASE</spring-cloud.version>
-        <java.version>12</java.version>
+        <java.version>11</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
@@ -50,8 +50,8 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>12</source>
-                    <target>12</target>
+                    <source>11</source>
+                    <target>11</target>
                 </configuration>
             </plugin>
             <plugin>
