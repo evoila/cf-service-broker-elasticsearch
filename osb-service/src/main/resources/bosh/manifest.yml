@@ -242,7 +242,7 @@ instance_groups:
     properties:
       elasticsearch_exporter:
         es:
-          uri: https://elastic:((elastic_credentials.password))@127.0.0.1:9200
+          uri: https://elastic:((elastic.password))@127.0.0.1:9200
           ca_cert: http_ssl.ca
           ssl_skip_verify: true
           cluster_settings: true
@@ -260,7 +260,7 @@ instance_groups:
               http:
                 basic_auth:
                   username: elastic
-                  password: ((elastic_credentials.password))
+                  password: ((elastic.password))
                 tls_config:
                   insecure_skip_verify: true
   properties:
