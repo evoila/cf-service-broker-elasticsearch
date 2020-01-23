@@ -28,8 +28,8 @@ update:
 
 stemcells:
 - alias: default
-  os: ubuntu-trusty
-  version: 3541.5
+  os: ubuntu-xenial
+  version: 621.5
 
 instance_groups:
 - name: ingest_nodes
@@ -231,6 +231,7 @@ instance_groups:
     consumes:
       database: {from: discovery_nodes}
     release: osb-bosh-elasticsearch
+  - name: backup-agent
     consumes:
       database:
         from: discovery_nodes
