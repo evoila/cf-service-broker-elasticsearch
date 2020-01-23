@@ -232,6 +232,7 @@ instance_groups:
       database: {from: discovery_nodes}
     release: osb-bosh-elasticsearch
   - name: backup-agent
+    release: osb-bosh-elasticsearch
     consumes:
       database:
         from: discovery_nodes
