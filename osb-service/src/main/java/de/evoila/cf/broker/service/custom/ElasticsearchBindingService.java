@@ -55,7 +55,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
     private static final String HTTPS = "https";
     private static final String X_PACK_USERS_URI_PATTERN = "%s/_xpack/security/user";
     private static final String HEALTH_ENDPOINT_URI_PATTERN = "%s/_cluster/health";
-    private static final String MANAGER_ROLE = "manager";
+    private static final String DEFAULT_ROLE = "superuser";
     private static final Logger log = LoggerFactory.getLogger(ElasticsearchBindingService.class);
     private static final String URI = "uri";
 
@@ -276,7 +276,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
     }
 
     private void addUserToElasticsearch(String bindingId, String userCreationUri, String password, RestTemplate restTemplate) throws ServiceBrokerException {
-        final ElasticsearchUser user = new ElasticsearchUser(password, MANAGER_ROLE);
+        final ElasticsearchUser user = new ElasticsearchUser(password, DEFAULT_ROLE);
 
         try {
             String bindingUserUri = userCreationUri + "/" + bindingId;

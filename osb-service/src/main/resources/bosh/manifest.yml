@@ -29,7 +29,7 @@ update:
 stemcells:
 - alias: default
   os: ubuntu-xenial
-  version: 621.5
+  version: 621.50
 
 instance_groups:
 - name: ingest_nodes
