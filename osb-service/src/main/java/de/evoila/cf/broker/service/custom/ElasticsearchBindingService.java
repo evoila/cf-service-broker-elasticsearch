@@ -8,7 +8,6 @@ import de.evoila.cf.broker.model.catalog.plan.Plan;
 import de.evoila.cf.broker.model.credential.UsernamePasswordCredential;
 import de.evoila.cf.broker.repository.*;
 import de.evoila.cf.broker.service.AsyncBindingService;
-import de.evoila.cf.broker.service.HAProxyService;
 import de.evoila.cf.broker.service.custom.constants.CredentialConstants;
 import de.evoila.cf.broker.service.impl.BindingServiceImpl;
 import de.evoila.cf.broker.util.ServiceInstanceUtils;
@@ -64,10 +63,10 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
 
     ElasticsearchBindingService(BindingRepository bindingRepository, ServiceDefinitionRepository serviceDefinitionRepository,
                                 ServiceInstanceRepository serviceInstanceRepository, RouteBindingRepository routeBindingRepository,
-                                @Autowired(required = false) HAProxyService haProxyService, JobRepository jobRepository, AsyncBindingService asyncBindingService,
+                                JobRepository jobRepository, AsyncBindingService asyncBindingService,
                                 PlatformRepository platformRepository, CredentialStore credentialStore) {
         super(bindingRepository, serviceDefinitionRepository, serviceInstanceRepository,
-                routeBindingRepository, haProxyService, jobRepository, asyncBindingService, platformRepository);
+                routeBindingRepository, jobRepository, asyncBindingService, platformRepository);
 
         this.credentialStore = credentialStore;
     }
