@@ -244,27 +244,27 @@ instance_groups:
     properties:
       elasticsearch_exporter:
         es:
-          uri: http://elastic:((elastic.password))@127.0.0.1:9200
+          uri: https://elastic:((elastic.password))@127.0.0.1:9200
 #          ca_cert: http_ssl.ca
-#          ssl_skip_verify: true
+          ssl_skip_verify: true
           cluster_settings: true
           indices: true
           indices_settings: true
           shards: true
-#  - name: blackbox_exporter
-#    release: prometheus
-#    properties:
-#      blackbox_exporter:
-#        config:
-#          modules:
-#            http_2xx:
-#              prober: http
-#              http:
-#                basic_auth:
-#                  username: elastic
-#                  password: ((elastic.password))
-#                tls_config:
-#                  insecure_skip_verify: true
+  - name: blackbox_exporter
+    release: prometheus
+    properties:
+      blackbox_exporter:
+        config:
+          modules:
+            http_2xx:
+              prober: http
+              http:
+                basic_auth:
+                  username: elastic
+                  password: ((elastic.password))
+                tls_config:
+                  insecure_skip_verify: true
   properties:
     elasticsearch:
       cluster_name: elasticsearch-cluster
