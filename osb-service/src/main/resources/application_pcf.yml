@@ -1,0 +1,43 @@
+catalog:
+  services:
+  - plans:
+    - metadata:
+        properties:
+           elasticsearch:
+             xpack:
+               security:
+                  http:
+                    certificate_authorities: "${CA_CERT}"
+                    ca_key: "${CA_KEY}""
+    - metadata:
+        properties:
+           elasticsearch:
+             xpack:
+               security:
+                  http:
+                    certificate_authorities: "${CA_CERT}"
+                    ca_key: "${CA_KEY}""
+    - metadata:
+        properties:
+           elasticsearch:
+             xpack:
+               security:
+                  http:
+                    certificate_authorities: "${CA_CERT}"
+                    ca_key: "${CA_KEY}""
+    - metadata:
+        properties:
+           elasticsearch:
+             xpack:
+               security:
+                  http:
+                    certificate_authorities: "${CA_CERT}"
+                    ca_key: "${CA_KEY}""
+    - metadata:
+        properties:
+           elasticsearch:
+             xpack:
+               security:
+                  http:
+                    certificate_authorities: "${CA_CERT}"
+                    ca_key: "${CA_KEY}""
