@@ -8,7 +8,7 @@ catalog:
                security:
                   http:
                     certificate_authorities: "${CA_CERT}"
-                    ca_key: "${CA_KEY}""
+                    ca_key: "${CA_KEY}"
     - metadata:
         properties:
            elasticsearch:
@@ -16,7 +16,7 @@ catalog:
                security:
                   http:
                     certificate_authorities: "${CA_CERT}"
-                    ca_key: "${CA_KEY}""
+                    ca_key: "${CA_KEY}"
     - metadata:
         properties:
            elasticsearch:
@@ -24,7 +24,7 @@ catalog:
                security:
                   http:
                     certificate_authorities: "${CA_CERT}"
-                    ca_key: "${CA_KEY}""
+                    ca_key: "${CA_KEY}"
     - metadata:
         properties:
            elasticsearch:
@@ -32,7 +32,7 @@ catalog:
                security:
                   http:
                     certificate_authorities: "${CA_CERT}"
-                    ca_key: "${CA_KEY}""
+                    ca_key: "${CA_KEY}"
     - metadata:
         properties:
            elasticsearch:
@@ -40,4 +40,4 @@ catalog:
                security:
                   http:
                     certificate_authorities: "${CA_CERT}"
-                    ca_key: "${CA_KEY}""
+                    ca_key: "${CA_KEY}"
