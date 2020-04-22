@@ -69,12 +69,12 @@ instance_groups:
         security:
           http:
             ssl:
-              certificate_authorities: ((ssl_ca.certificate))
-              ca_key: ((ssl_ca.private_key))
+              certificate-authorities: ((ssl_ca.certificate))
+              ca-key: ((ssl_ca.private_key))
           transport:
             ssl:
-              certificate_authorities: ((transport_ca.certificate))
-              ca_key: ((transport_ca.private_key))
+              certificate-authorities: ((transport_ca.certificate))
+              ca-key: ((transport_ca.private_key))
 #      discovery:
 #        minimum_master_nodes: 1 # (Number of master-eligible nodes / 2) - 1
 - name: coordinating_nodes
@@ -112,12 +112,12 @@ instance_groups:
         security:
           http:
             ssl:
-              certificate_authorities: ((ssl_ca.certificate))
-              ca_key: ((ssl_ca.private_key))
+              certificate-authorities: ((ssl_ca.certificate))
+              ca-key: ((ssl_ca.private_key))
           transport:
             ssl:
-              certificate_authorities: ((transport_ca.certificate))
-              ca_key: ((transport_ca.private_key))
+              certificate-authorities: ((transport_ca.certificate))
+              ca-key: ((transport_ca.private_key))
 #      discovery:
 #        minimum_master_nodes: 1 # (Number of master-eligible nodes / 2) - 1
 - name: master_eligible_nodes
@@ -157,12 +157,12 @@ instance_groups:
         security:
           http:
             ssl:
-              certificate_authorities: ((ssl_ca.certificate))
-              ca_key: ((ssl_ca.private_key))
+              certificate-authorities: ((ssl_ca.certificate))
+              ca-key: ((ssl_ca.private_key))
           transport:
             ssl:
-              certificate_authorities: ((transport_ca.certificate))
-              ca_key: ((transport_ca.private_key))
+              certificate-authorities: ((transport_ca.certificate))
+              ca-key: ((transport_ca.private_key))
 #      discovery:
 #        minimum_master_nodes: 1 # (Number of master-eligible nodes / 2) - 1
 - name: data_nodes
@@ -202,12 +202,12 @@ instance_groups:
         security:
           http:
             ssl:
-              certificate_authorities: ((ssl_ca.certificate))
-              ca_key: ((ssl_ca.private_key))
+              certificate-authorities: ((ssl_ca.certificate))
+              ca-key: ((ssl_ca.private_key))
           transport:
             ssl:
-              certificate_authorities: ((transport_ca.certificate))
-              ca_key: ((transport_ca.private_key))
+              certificate-authorities: ((transport_ca.certificate))
+              ca-key: ((transport_ca.private_key))
 #      discovery:
 #        minimum_master_nodes: 1 # (Number of master-eligible nodes / 2) - 1
 - name: general_nodes
@@ -276,11 +276,11 @@ instance_groups:
         security:
           http:
             ssl:
-              certificate_authorities: ((ssl_ca.certificate))
-              ca_key: ((ssl_ca.private_key))
+              certificate-authorities: ((ssl_ca.certificate))
+              ca-key: ((ssl_ca.private_key))
           transport:
             ssl:
-              certificate_authorities: ((transport_ca.certificate))
-              ca_key: ((transport_ca.private_key))
+              certificate-authorities: ((transport_ca.certificate))
+              ca-key: ((transport_ca.private_key))
 #      discovery:
 #        minimum_master_nodes: 1 # (Number of master-eligible nodes / 2) - 1
