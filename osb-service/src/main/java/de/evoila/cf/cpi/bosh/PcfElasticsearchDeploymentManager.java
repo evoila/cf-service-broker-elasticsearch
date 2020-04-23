@@ -32,6 +32,7 @@ public class PcfElasticsearchDeploymentManager extends BaseElasticsearchDeployme
         catalog.getServices().forEach(s -> s.getPlans().forEach(this::determineAndSetEgressInstanceGroup));
         catalog.getServices().forEach(s -> s.getPlans().forEach(this::determineAndSetIngressInstanceGroup));
         catalog.getServices().forEach(s -> s.getPlans().forEach(this::setDatabaseProvidersAndConsumers));
+        catalog.getServices().forEach(s -> s.getPlans().forEach(this::updateCaCredhubPath));
     }
 
 
@@ -281,6 +282,16 @@ public class PcfElasticsearchDeploymentManager extends BaseElasticsearchDeployme
             database.put("database", asGeneralNodes);
 
             instanceGroupConfig.setProvides(database);
+        }
+    }
+
+    private void updateCaCredhubPath(Plan plan) {
+        Object caPath = plan.getMetadata().getCustomParameters().get("capath");
+
+        if (caPath instanceof String) {
+           final String caPathAsString = (String) caPath;
+           MapUtils.deepInsert(plan.getMetadata().getProperties(), "elasticsearch.xpack.security.http.ssl.certificate-authorities", "((" + caPathAsString + ".certificate))");
+           MapUtils.deepInsert(plan.getMetadata().getProperties(), "elasticsearch.xpack.security.http.ssl.ca-key", "((" + caPathAsString + ".private_key))((" + caPathAsString + ".ca))");
         }
     }
 }
