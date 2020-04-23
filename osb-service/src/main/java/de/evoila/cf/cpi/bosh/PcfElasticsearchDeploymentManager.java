@@ -290,8 +290,8 @@ public class PcfElasticsearchDeploymentManager extends BaseElasticsearchDeployme
 
         if (caPath instanceof String) {
            final String caPathAsString = (String) caPath;
-           MapUtils.deepInsert(plan.getMetadata().getProperties(), "elasticsearch.xpack.security.http.ssl.certificate-authorities", "((" + caPathAsString + ".certificate))");
-           MapUtils.deepInsert(plan.getMetadata().getProperties(), "elasticsearch.xpack.security.http.ssl.ca-key", "((" + caPathAsString + ".private_key))((" + caPathAsString + ".ca))");
+           MapUtils.deepInsert(plan.getMetadata().getProperties(), "elasticsearch.xpack.security.http.ssl.certificate-authorities", "((" + caPathAsString + ".cert_pem))");
+           MapUtils.deepInsert(plan.getMetadata().getProperties(), "elasticsearch.xpack.security.http.ssl.ca-key", "((" + caPathAsString + ".private_key_pem))");
         }
     }
 }
