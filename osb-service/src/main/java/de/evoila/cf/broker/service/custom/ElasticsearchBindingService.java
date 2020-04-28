@@ -53,7 +53,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
 
     private static final String HTTP = "http";
     private static final String HTTPS = "https";
-    private static final String X_PACK_USERS_URI_PATTERN = "%s/_xpack/security/user";
+    private static final String X_PACK_USERS_URI_PATTERN = "%s/_security/user";
     private static final String HEALTH_ENDPOINT_URI_PATTERN = "%s/_cluster/health";
     private static final String DEFAULT_ROLE = "superuser";
     private static final Logger log = LoggerFactory.getLogger(ElasticsearchBindingService.class);
