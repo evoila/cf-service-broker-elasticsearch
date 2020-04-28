@@ -60,15 +60,17 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
     private static final String URI = "uri";
 
     private final CredentialStore credentialStore;
+    private final RestTemplate restTemplate;
 
     ElasticsearchBindingService(BindingRepository bindingRepository, ServiceDefinitionRepository serviceDefinitionRepository,
                                 ServiceInstanceRepository serviceInstanceRepository, RouteBindingRepository routeBindingRepository,
-                                JobRepository jobRepository, AsyncBindingService asyncBindingService,
-                                PlatformRepository platformRepository, CredentialStore credentialStore) {
+                                JobRepository jobRepository, AsyncBindingService asyncBindingService, PlatformRepository platformRepository,
+                                CredentialStore credentialStore, RestTemplate restTemplate) {
         super(bindingRepository, serviceDefinitionRepository, serviceInstanceRepository,
                 routeBindingRepository, jobRepository, asyncBindingService, platformRepository);
 
         this.credentialStore = credentialStore;
+        this.restTemplate = restTemplate;
     }
 
     private static ClientMode getClientModeOrDefault(final Map<String, Object> map) {
@@ -161,7 +163,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
 
             if (ElasticsearchUtilities.isHttpsEnabled(plan)) {
                 protocolMode = HTTPS;
-                restTemplate = getRestTemplateWithSSL();
+                restTemplate = this.restTemplate;
             } else {
                 protocolMode = HTTP;
                 restTemplate = new RestTemplate();
@@ -252,29 +254,6 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         return new BasicAuthorizationInterceptor(username, adminPassword);
     }
 
-    /**
-     * Returns a RestTemplate, which is usable for SSL/TLS encrypted requests.
-     *
-     * @return a RestTemplate with SSL/TLS support
-     */
-    private RestTemplate getRestTemplateWithSSL() {
-        final SSLContext sslcontext;
-        try {
-            sslcontext = SSLContexts.custom().loadTrustMaterial(null,
-                    new TrustSelfSignedStrategy()).build();
-        } catch (NoSuchAlgorithmException | KeyManagementException | KeyStoreException e) {
-            throw new RuntimeException();
-        }
-
-        SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslcontext,
-                new String[]{"TLSv1"}, null, new NoopHostnameVerifier());
-
-        final HttpClient httpclient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
-        final HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory(httpclient);
-
-        return new RestTemplate(factory);
-    }
-
     private void addUserToElasticsearch(String bindingId, String userCreationUri, String password, RestTemplate restTemplate) throws ServiceBrokerException {
         final ElasticsearchUser user = new ElasticsearchUser(password, DEFAULT_ROLE);
 
@@ -342,7 +321,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
         if (ElasticsearchUtilities.planContainsXPack(plan)) {
             if (ElasticsearchUtilities.isHttpsEnabled(plan)) {
                 protocolMode = HTTPS;
-                restTemplate = getRestTemplateWithSSL();
+                restTemplate = this.restTemplate;
             } else {
                 protocolMode = HTTP;
                 restTemplate = new RestTemplate();
