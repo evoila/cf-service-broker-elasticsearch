@@ -6,6 +6,7 @@ import de.evoila.cf.broker.model.catalog.plan.CustomInstanceGroupConfig;
 import de.evoila.cf.broker.model.catalog.plan.InstanceGroupConfig;
 import de.evoila.cf.broker.model.catalog.plan.Metadata;
 import de.evoila.cf.broker.model.catalog.plan.Plan;
+import de.evoila.cf.broker.model.credential.Credential;
 import de.evoila.cf.broker.service.custom.constants.CredentialConstants;
 import de.evoila.cf.broker.util.MapUtils;
 import de.evoila.cf.cpi.bosh.deployment.DeploymentManager;
@@ -60,52 +61,69 @@ public abstract class BaseElasticsearchDeploymentManager extends DeploymentManag
         if (customParameters != null && !customParameters.isEmpty())
             properties.putAll(customParameters);
 
-        this.extractPlugins(plan);
-        this.updateInstanceGroupConfiguration(manifest, plan);
+        if(isUpdate) {
+            if(customParameters != null && !customParameters.isEmpty()) {
+                Map<String, Object> elasticsearch = (Map<String, Object>) customParameters.get("elasticsearch");
+                Map<String, Object> backup = (Map<String, Object>) elasticsearch.get("backup");
 
-        // Add user to credential store
+                credentialStore.createUser(serviceInstance, CredentialConstants.S3_BACKUP_CREDENTIALS, backup.get("access_key").toString(), backup.get("secret_key").toString());
 
-        credentialStore.createUser(serviceInstance, CredentialConstants.SUPER_ADMIN, CredentialConstants.SUPER_ADMIN);
-        credentialStore.createUser(serviceInstance, CredentialConstants.KIBANA_USER, CredentialConstants. KIBANA_USER);
-        credentialStore.createUser(serviceInstance, CredentialConstants.LOGSTASH_USER, CredentialConstants.LOGSTASH_USER);
-        credentialStore.createUser(serviceInstance, CredentialConstants.DRAIN_MONITOR_USER, CredentialConstants.DRAIN_MONITOR_USER);
-        credentialStore.createUser(serviceInstance, DefaultCredentialConstants.BACKUP_AGENT_CREDENTIALS, CredentialConstants.BACKUP_AGENT_USER);
-        credentialStore.createUser(serviceInstance, DefaultCredentialConstants.BACKUP_CREDENTIALS, CredentialConstants.SUPER_ADMIN);
+                manifest.getInstanceGroups().forEach(instanceGroup -> {
+                    final Map<String, Object> instanceGroupProperties = instanceGroup.getProperties();
+                    MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.backup.s3.client.default.access_key", "((" + CredentialConstants.S3_BACKUP_CREDENTIALS + ".username))");
+                    MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.backup.s3.client.default.secret_key", "((" + CredentialConstants.S3_BACKUP_CREDENTIALS + ".password))");
+                    MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.backup.s3.client.default.bucket_name", backup.get("bucket_name").toString());
+                });
+            }
 
-        if (credentialStore instanceof CredhubClient) {
-            manifest.getInstanceGroups().forEach(instanceGroup -> {
-                final Map<String, Object> instanceGroupProperties = instanceGroup.getProperties();
-                MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.cluster_name", "elasticsearch-" + serviceInstance.getId());
-                MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.elastic.password", "((" + CredentialConstants.SUPER_ADMIN + ".password))");
-                MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.kibana.password", "((" + CredentialConstants.KIBANA_USER + ".password))");
-                MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.logstash_system.password", "((" + CredentialConstants.LOGSTASH_USER + ".password))");
-                MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.drain-monitor.password", "((" + CredentialConstants.DRAIN_MONITOR_USER + ".password))");
-
-                // Add Backup Agent credentials to manifest
-                if (instanceGroup.getJob(BACKUP_AGENT_JOB_NAME).isPresent()) {
-                    JobV2 backupAgentJob = instanceGroup.getJob(BACKUP_AGENT_JOB_NAME).get();
-
-                    MapUtils.deepInsert(backupAgentJob.getProperties(), "backup_agent.username", "((" + DefaultCredentialConstants.BACKUP_AGENT_CREDENTIALS + ".username))");
-                    MapUtils.deepInsert(backupAgentJob.getProperties(), "backup_agent.password", "((" + DefaultCredentialConstants.BACKUP_AGENT_CREDENTIALS + ".password))");
-                }
-            });
+            this.updateInstanceGroupConfiguration(manifest, plan);
         } else {
-            manifest.getInstanceGroups().forEach(instanceGroup -> {
-                final Map<String, Object> instanceGroupProperties = instanceGroup.getProperties();
-                MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.cluster_name", "elasticsearch-" + serviceInstance.getId());
-                MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.elastic.password", credentialStore.getPassword(serviceInstance, CredentialConstants.SUPER_ADMIN));
-                MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.kibana.password", credentialStore.getPassword(serviceInstance, CredentialConstants.KIBANA_USER));
-                MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.logstash_system.password", credentialStore.getPassword(serviceInstance, CredentialConstants.LOGSTASH_USER));
-                MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.drain-monitor.password", credentialStore.getPassword(serviceInstance, CredentialConstants.DRAIN_MONITOR_USER));
+            this.extractPlugins(plan);
+            this.updateInstanceGroupConfiguration(manifest, plan);
 
-                // Add Backup Agent credentials to manifest
-                if (instanceGroup.getJob(BACKUP_AGENT_JOB_NAME).isPresent()) {
-                    JobV2 backupAgentJob = instanceGroup.getJob(BACKUP_AGENT_JOB_NAME).get();
+            // Add user to credential store
+            credentialStore.createUser(serviceInstance, CredentialConstants.SUPER_ADMIN, CredentialConstants.SUPER_ADMIN);
+            credentialStore.createUser(serviceInstance, CredentialConstants.KIBANA_USER, CredentialConstants. KIBANA_USER);
+            credentialStore.createUser(serviceInstance, CredentialConstants.LOGSTASH_USER, CredentialConstants.LOGSTASH_USER);
+            credentialStore.createUser(serviceInstance, CredentialConstants.DRAIN_MONITOR_USER, CredentialConstants.DRAIN_MONITOR_USER);
+            credentialStore.createUser(serviceInstance, DefaultCredentialConstants.BACKUP_AGENT_CREDENTIALS, CredentialConstants.BACKUP_AGENT_USER);
+            credentialStore.createUser(serviceInstance, DefaultCredentialConstants.BACKUP_CREDENTIALS, CredentialConstants.SUPER_ADMIN);
 
-                    MapUtils.deepInsert(backupAgentJob.getProperties(), "backup_agent.username", CredentialConstants.BACKUP_AGENT_USER);
-                    MapUtils.deepInsert(backupAgentJob.getProperties(), "backup_agent.password", credentialStore.getPassword(serviceInstance, DefaultCredentialConstants.BACKUP_AGENT_CREDENTIALS));
-                }
-            });
+            if (credentialStore instanceof CredhubClient) {
+                manifest.getInstanceGroups().forEach(instanceGroup -> {
+                    final Map<String, Object> instanceGroupProperties = instanceGroup.getProperties();
+                    MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.cluster_name", "elasticsearch-" + serviceInstance.getId());
+                    MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.elastic.password", "((" + CredentialConstants.SUPER_ADMIN + ".password))");
+                    MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.kibana.password", "((" + CredentialConstants.KIBANA_USER + ".password))");
+                    MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.logstash_system.password", "((" + CredentialConstants.LOGSTASH_USER + ".password))");
+                    MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.drain-monitor.password", "((" + CredentialConstants.DRAIN_MONITOR_USER + ".password))");
+
+                    // Add Backup Agent credentials to manifest
+                    if (instanceGroup.getJob(BACKUP_AGENT_JOB_NAME).isPresent()) {
+                        JobV2 backupAgentJob = instanceGroup.getJob(BACKUP_AGENT_JOB_NAME).get();
+
+                        MapUtils.deepInsert(backupAgentJob.getProperties(), "backup_agent.username", "((" + DefaultCredentialConstants.BACKUP_AGENT_CREDENTIALS + ".username))");
+                        MapUtils.deepInsert(backupAgentJob.getProperties(), "backup_agent.password", "((" + DefaultCredentialConstants.BACKUP_AGENT_CREDENTIALS + ".password))");
+                    }
+                });
+            } else {
+                manifest.getInstanceGroups().forEach(instanceGroup -> {
+                    final Map<String, Object> instanceGroupProperties = instanceGroup.getProperties();
+                    MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.cluster_name", "elasticsearch-" + serviceInstance.getId());
+                    MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.elastic.password", credentialStore.getPassword(serviceInstance, CredentialConstants.SUPER_ADMIN));
+                    MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.kibana.password", credentialStore.getPassword(serviceInstance, CredentialConstants.KIBANA_USER));
+                    MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.logstash_system.password", credentialStore.getPassword(serviceInstance, CredentialConstants.LOGSTASH_USER));
+                    MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.xpack.users.reserved.drain-monitor.password", credentialStore.getPassword(serviceInstance, CredentialConstants.DRAIN_MONITOR_USER));
+
+                    // Add Backup Agent credentials to manifest
+                    if (instanceGroup.getJob(BACKUP_AGENT_JOB_NAME).isPresent()) {
+                        JobV2 backupAgentJob = instanceGroup.getJob(BACKUP_AGENT_JOB_NAME).get();
+
+                        MapUtils.deepInsert(backupAgentJob.getProperties(), "backup_agent.username", CredentialConstants.BACKUP_AGENT_USER);
+                        MapUtils.deepInsert(backupAgentJob.getProperties(), "backup_agent.password", credentialStore.getPassword(serviceInstance, DefaultCredentialConstants.BACKUP_AGENT_CREDENTIALS));
+                    }
+                });
+            }
         }
     }
 
