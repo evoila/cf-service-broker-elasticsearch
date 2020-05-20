@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author Michael Hahn
+ * @author Michael Hahn, René Schollmeyer
  */
 
 @Service

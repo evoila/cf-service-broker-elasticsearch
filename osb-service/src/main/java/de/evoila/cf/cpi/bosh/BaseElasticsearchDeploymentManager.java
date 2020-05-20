@@ -6,7 +6,6 @@ import de.evoila.cf.broker.model.catalog.plan.CustomInstanceGroupConfig;
 import de.evoila.cf.broker.model.catalog.plan.InstanceGroupConfig;
 import de.evoila.cf.broker.model.catalog.plan.Metadata;
 import de.evoila.cf.broker.model.catalog.plan.Plan;
-import de.evoila.cf.broker.model.credential.Credential;
 import de.evoila.cf.broker.service.custom.constants.CredentialConstants;
 import de.evoila.cf.broker.util.MapUtils;
 import de.evoila.cf.cpi.bosh.deployment.DeploymentManager;
@@ -66,14 +65,17 @@ public abstract class BaseElasticsearchDeploymentManager extends DeploymentManag
                 Map<String, Object> elasticsearch = (Map<String, Object>) customParameters.get("elasticsearch");
                 Map<String, Object> backup = (Map<String, Object>) elasticsearch.get("backup");
 
-                credentialStore.createUser(serviceInstance, CredentialConstants.S3_BACKUP_CREDENTIALS, backup.get("access_key").toString(), backup.get("secret_key").toString());
+                if(!backup.isEmpty()) {
+                    credentialStore.createUser(serviceInstance, CredentialConstants.S3_BACKUP_CREDENTIALS, backup.get("access_key").toString(), backup.get("secret_key").toString());
 
-                manifest.getInstanceGroups().forEach(instanceGroup -> {
-                    final Map<String, Object> instanceGroupProperties = instanceGroup.getProperties();
-                    MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.backup.s3.client.default.access_key", "((" + CredentialConstants.S3_BACKUP_CREDENTIALS + ".username))");
-                    MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.backup.s3.client.default.secret_key", "((" + CredentialConstants.S3_BACKUP_CREDENTIALS + ".password))");
-                    MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.backup.s3.client.default.bucket_name", backup.get("bucket_name").toString());
-                });
+                    manifest.getInstanceGroups().forEach(instanceGroup -> {
+                        final Map<String, Object> instanceGroupProperties = instanceGroup.getProperties();
+                        MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.backup.s3.client.default.access_key", "((" + CredentialConstants.S3_BACKUP_CREDENTIALS + ".username))");
+                        MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.backup.s3.client.default.secret_key", "((" + CredentialConstants.S3_BACKUP_CREDENTIALS + ".password))");
+                        MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.backup.s3.client.default.bucket_name", backup.get("bucket_name").toString());
+                        MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.backup.s3.client.default.repository_name", backup.get("repository_name").toString());
+                    });
+                }
             }
 
             this.updateInstanceGroupConfiguration(manifest, plan);
