@@ -75,12 +75,6 @@ public abstract class BaseElasticsearchDeploymentManager extends DeploymentManag
                         MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.backup.s3.client.default.bucket_name", backup.get("bucket_name").toString());
                         MapUtils.deepInsert(instanceGroupProperties, "elasticsearch.backup.s3.client.default.repository_name", backup.get("repository_name").toString());
                     });
-                } else {
-                    manifest.getInstanceGroups().forEach(instanceGroup ->  {
-                        final Map<String, Object> instanceGroupProperties = instanceGroup.getProperties();
-                        Map<String, Object> deployedElasticsearchProperties = (Map<String, Object>) instanceGroupProperties.get("elasticsearch");
-                        deployedElasticsearchProperties.remove(backup);
-                    });
                 }
             }
 
