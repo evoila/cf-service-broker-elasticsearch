@@ -47,4 +47,6 @@ public class CredentialConstants {
      * The user for connecting to the backup agent.
      */
     public static String BACKUP_AGENT_USER = "backup";
+
+    public static String S3_BACKUP_CREDENTIALS = "s3_backup_credentials";
 }
