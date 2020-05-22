@@ -8,8 +8,13 @@ import de.evoila.cf.broker.model.catalog.plan.Plan;
 import de.evoila.cf.broker.repository.ServiceInstanceRepository;
 import de.evoila.cf.broker.service.CatalogService;
 import de.evoila.cf.broker.service.custom.ElasticsearchUtilities;
+import de.evoila.cf.broker.service.custom.constants.CredentialConstants;
+import de.evoila.cf.security.credentials.CredentialStore;
 import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -30,13 +35,22 @@ public class ElasticsearchConnector {
 
     private CatalogService catalogService;
 
-    public ElasticsearchConnector(ServiceInstanceRepository serviceInstanceRepository, CatalogService catalogService) {
+    private CredentialStore credentialStore;
+
+    public ElasticsearchConnector(ServiceInstanceRepository serviceInstanceRepository, CatalogService catalogService, CredentialStore credentialStore) {
         this.serviceInstanceRepository = serviceInstanceRepository;
         this.catalogService = catalogService;
+        this.credentialStore = credentialStore;
     }
 
-    public RestHighLevelClient createElasticClient(List<ServerAddress> hosts, String serviceInstanceId, CredentialsProvider credentialsProvider) {
+    public RestHighLevelClient createElasticClient(List<ServerAddress> hosts, String serviceInstanceId) {
         boolean success = false;
+
+        String username = CredentialConstants.SUPER_ADMIN;
+        String password = credentialStore.getUser(serviceInstanceId, CredentialConstants.SUPER_ADMIN).getPassword();
+
+        final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+        credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password));
 
         for(ServerAddress serverAddress : hosts) {
             String ip = serverAddress.getIp();

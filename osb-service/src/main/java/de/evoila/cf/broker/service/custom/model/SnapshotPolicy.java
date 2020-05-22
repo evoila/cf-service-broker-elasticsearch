@@ -72,18 +72,28 @@ public class SnapshotPolicy {
     @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
     public static class Retention {
 
-        private String expireAfter;
+        private int expireAfter;
+
+        private String timeValue;
 
         private int minCount;
 
         private int maxCount;
 
-        public String getExpireAfter() {
+        public int getExpireAfter() {
             return expireAfter;
         }
 
-        public void setExpireAfter(String expireAfter) {
+        public void setExpireAfter(int expireAfter) {
             this.expireAfter = expireAfter;
+        }
+
+        public String getTimeValue() {
+            return timeValue;
+        }
+
+        public void setTimeValue(String timeValue) {
+            this.timeValue = timeValue;
         }
 
         public int getMinCount() {

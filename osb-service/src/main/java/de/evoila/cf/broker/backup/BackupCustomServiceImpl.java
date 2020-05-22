@@ -7,12 +7,7 @@ import de.evoila.cf.broker.model.ServiceInstance;
 import de.evoila.cf.broker.repository.ServiceInstanceRepository;
 import de.evoila.cf.broker.service.BackupCustomService;
 import de.evoila.cf.broker.service.CatalogService;
-import de.evoila.cf.broker.service.custom.constants.CredentialConstants;
 import de.evoila.cf.security.credentials.CredentialStore;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.GetIndexRequest;
@@ -57,13 +52,7 @@ public class BackupCustomServiceImpl implements BackupCustomService {
 
         ServiceInstance serviceInstance = serviceInstanceRepository.getServiceInstance(serviceInstanceId);
 
-        String username = CredentialConstants.SUPER_ADMIN;
-        String password = credentialStore.getUser(serviceInstanceId, CredentialConstants.SUPER_ADMIN).getPassword();
-
-        final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-        credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password));
-
-        RestHighLevelClient client = elasticsearchConnector.createElasticClient(serviceInstance.getHosts(), serviceInstanceId, credentialsProvider);
+        RestHighLevelClient client = elasticsearchConnector.createElasticClient(serviceInstance.getHosts(), serviceInstanceId);
 
         if (client != null) {
             String[] indices;
