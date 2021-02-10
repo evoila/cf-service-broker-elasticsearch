@@ -35,11 +35,6 @@
         </dependency>
         <dependency>
             <groupId>de.evoila.cf.broker</groupId>
-            <artifactId>openstack</artifactId>
-            <version>${deployment.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>de.evoila.cf.broker</groupId>
             <artifactId>bosh</artifactId>
             <version>${deployment.version}</version>
         </dependency>

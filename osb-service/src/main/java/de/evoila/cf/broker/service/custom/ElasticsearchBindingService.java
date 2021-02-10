@@ -1,7 +1,6 @@
 package de.evoila.cf.broker.service.custom;
 
 import de.evoila.cf.broker.exception.ServiceBrokerException;
-import de.evoila.cf.broker.exception.ServiceInstanceBindingException;
 import de.evoila.cf.broker.model.*;
 import de.evoila.cf.broker.model.catalog.ServerAddress;
 import de.evoila.cf.broker.model.catalog.plan.Plan;
@@ -264,7 +263,7 @@ public class ElasticsearchBindingService extends BindingServiceImpl {
             final HttpStatus statusCode = entity.getStatusCode();
             if (!statusCode.is2xxSuccessful()) {
                 throw new ServiceBrokerException(
-                        new ServiceInstanceBindingException(bindingId, statusCode, "Cannot create user for binding."));
+                        new ServiceBrokerException("Cannot create user for binding."));
             }
         } catch (RestClientException e) {
             throw new ServiceBrokerException("Cannot create user for binding. " + e.getMessage());
